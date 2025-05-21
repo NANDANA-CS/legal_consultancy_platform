@@ -40,7 +40,7 @@ const Navbar = () => {
                             to="/lawyers"
                             className="hover:bg-gray-700 px-3 py-2 rounded-md text-xl font-medium"
                         >
-                            Find Lawyers
+                            Find  Lawyers
                         </Link>
                         {user && (
                             <Link
@@ -72,12 +72,7 @@ const Navbar = () => {
                                 >
                                     Login
                                 </Link>
-                                <Link
-                                    to="/signup"
-                                    className="bg-blue-600 hover:bg-blue-700 px-3 py-2 rounded-md text-xl font-medium"
-                                >
-                                    Signup
-                                </Link>
+                               
                             </>
                         )}
                     </div>

@@ -6,17 +6,15 @@ import Navbar from '../../components/navbar/Navbar';
 
 const About = () => {
   const [user, setUser] = useState(null);
-
- 
-
   return (
     <>
     <Navbar/>
       <div className="bg-gray-900 text-white mt-40">
    
-      {/* About Section */}
+ 
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
+          <h1 className="text-5xl font-bold text-left mb-8 underline">ABOUT US</h1>
           <h2 className="text-3xl font-bold text-center mb-8">OUR MISSION</h2>
           <p className="text-lg text-gray-300 text-center mb-12">
             At LegaLead, we aim to make legal services accessible, secure, and efficient. Our platform connects clients with
@@ -41,7 +39,6 @@ const About = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-900">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-center mb-12">Why LegaLead?</h2>
