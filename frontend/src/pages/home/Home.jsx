@@ -33,7 +33,7 @@ const Home = () => {
       closeOnClick: true,
       pauseOnHover: true,
       draggable: true,
-      theme: 'dark', 
+      theme: 'dark',
     });
   };
 
@@ -41,17 +41,25 @@ const Home = () => {
     <>
       <ToastContainer />
       <Navbar />
-      <div className="bg-gray-800 text-white min-h-screen pt-24 mt-20">
-        <section className="py-20 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-800 text-white min-h-screen pt-24 mt-10">
+        <div className="w-full h-300 bg-[url('/images/hoe.jpg')] bg-no-repeat bg-contain relative">
+          <div className='absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
+            <h1 className="text-7xl sm:text-5xl font-bold mb-6 text-black">
+            Online Lawyer Consultation Platform
+          </h1>
+          <p className="text-lg text-center  sm:text-xl text-gray-300 mb-1 text-black">
+            {user
+              ? `Hello, ${user.name}! Connect with expert lawyers for your legal needs.`
+              : 'Connect with expert lawyers, book consultations, and track your cases seamlessly.'}
+          </p>
+          </div>
+        </div>
+
+
+        <section className="py-20 px-4 sm:px-6 lg:px-8 ">
+
           <div className="max-w-5xl mx-auto text-center">
-            <h1 className="text-4xl sm:text-5xl font-bold mb-6">
-              Online Lawyer Consultation Platform
-            </h1>
-            <p className="text-lg sm:text-xl text-gray-300 mb-12">
-              {user
-                ? `Hello, ${user.name}! Connect with expert lawyers for your legal needs.`
-                : 'Connect with expert lawyers, book consultations, and track your cases seamlessly.'}
-            </p>
+
 
             <div className="bg-gray-900 p-10 w-full h-full rounded-xl shadow-lg hover:shadow-2xl transition">
               <h2 className="text-3xl font-semibold text-left text-white mb-4">What Are Lawyer Services?</h2>
@@ -76,25 +84,7 @@ const Home = () => {
                 >
                   Chat with Lawyers
                 </button>
-                {/* {user ? (
-                  <Link
-                    to="/dashboard"
-                    className="bg-green-600 hover:bg-green-700 px-6 py-3 rounded-md text-lg font-medium transition"
-                  >
-                    {user.role === 'lawyer'
-                      ? 'Lawyer Dashboard'
-                      : user.role === 'admin'
-                        ? 'Admin Dashboard'
-                        : 'Client Dashboard'}
-                  </Link>
-                ) : (
-                  <Link
-                    to="/login"
-                    className="bg-gray-700 hover:bg-gray-800 px-6 py-3 rounded-md text-lg font-medium transition"
-                  >
-                    Login
-                  </Link>
-                )} */}
+              
               </div>
             </div>
           </div>

@@ -3,91 +3,131 @@ import bcrypt from 'bcrypt';
 import Client from '../models/client.model.js';
 import Lawyer from '../models/lawyer.model.js';
 
-// User signup (create client or lawyer)
+// lawyer signup
 export const signup = async (req, res) => {
-  const { name, email, password, role } = req.body;
-
+  console.log(req.body)
+  const {
+    name,
+    email,
+    password,
+    phoneNumber,
+    barRegistrationNumber,
+    barCouncilState,
+    yearsOfExperience,
+    currentWorkplace,
+    role,
+  } = req.body;
+  
   try {
-    // Check if user already exists
-    let user = await Client.findOne({ email }) || await Lawyer.findOne({ email });
+    let user = await Lawyer.findOne({ email });
+    console.log("inside signup");
+    console.log(user)
     if (user) {
       return res.status(400).json({ message: 'Email already registered' });
     }
+    
 
-    // Hash the password
+    if (role === 'lawyer') {
+      const existingLawyer = await Lawyer.findOne({ barRegistrationNumber });
+      if (existingLawyer) {
+        return res.status(400).json({ message: 'Bar Registration Number already in use' });
+      }
+    }
+
+
+    if (role === 'lawyer' && (!req.files || !req.files.profilePic)) {
+      return res.status(400).json({ message: 'Profile picture is required for lawyers' });
+    }
+
+
+    if (role === 'lawyer') {
+      if (!name || !email || !password || !phoneNumber || !barRegistrationNumber ||
+          !barCouncilState || !yearsOfExperience || !currentWorkplace) {
+        return res.status(400).json({ message: 'All required fields must be provided' });
+      }
+    }
+
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create new user based on role
     if (role === 'lawyer') {
-      user = new Lawyer({ name, email, password: hashedPassword, role });
+      user = new Lawyer({
+        name,
+        email,
+        password: hashedPassword,
+        role,
+        phoneNumber,
+        barRegistrationNumber,
+        barCouncilState,
+        yearsOfExperience: Number(yearsOfExperience),
+        currentWorkplace,
+        profilePic: req.files.profilePic[0].path,
+      });
     } else {
-      user = new Client({ name, email, password: hashedPassword, role: 'client' });
+      user = new Lawyer({ name, email, password: hashedPassword, role: 'lawyer' });
     }
-
-    // Save user to database
     await user.save();
-
-    // Create JWT token
-    const token = jwt.sign(
-      { id: user._id, name: user.name, email: user.email, role: user.role },
-      process.env.JWT_KEY,
-      { expiresIn: '1h' } // Token expires in 1 hour
-    );
-
-    // Send token to frontend
-    res.status(201).json({ token });
-  } catch (err) {
-    console.error('Signup Error:', err.message);
-    res.status(500).json({ message: 'Server error during signup' });
-  }
-};
-
-// User login
-export const login = async (req, res) => {
-  const { email, password } = req.body;
-
-  try {
-    // Find user (check both Client and Lawyer models)
-    let user = await Client.findOne({ email }) || await Lawyer.findOne({ email });
-    if (!user) {
-      return res.status(400).json({ message: 'Email not found' });
-    }
-
-    // Verify password
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Incorrect password' });
-    }
-
-    // Create JWT token
     const token = jwt.sign(
       { id: user._id, name: user.name, email: user.email, role: user.role },
       process.env.JWT_KEY,
       { expiresIn: '1h' }
     );
 
-    // Send token to frontend
-    res.json({ token });
+    res.status(201).json({ token, message: 'Signup successful' });
+  } catch (err) {
+    console.error('Signup Error:', err.message);
+    res.status(500).json({ message: 'Server error during signup' });
+  }
+};
+
+
+
+
+// login
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+
+    let user = await Lawyer.findOne({ email }) || await Lawyer.findOne({ email });
+    if (!user) {
+      return res.status(400).json({ message: 'Email not found' });
+    }
+
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Incorrect password' });
+    }
+
+
+    const token = jwt.sign(
+      { id: user._id, name: user.name, email: user.email, role: user.role },
+      process.env.JWT_KEY,
+      { expiresIn: '1h' }
+    );
+
+
+    res.json({ token, message: 'Login successful' });
   } catch (err) {
     console.error('Login Error:', err.message);
     res.status(500).json({ message: 'Server error during login' });
   }
 };
 
-// Get user data (protected route)
+// getuser
 export const getUserData = async (req, res) => {
   try {
-    // User ID and data from auth middleware
+
     const userId = req.user;
     const userData = req.userData;
 
-    // Fetch user from database (optional, if you need more fields)
     let user = await Client.findById(userId) || await Lawyer.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    // Send user data
+
     res.json({
       id: user._id,
       name: user.name,

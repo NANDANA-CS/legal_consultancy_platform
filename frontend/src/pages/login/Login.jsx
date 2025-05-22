@@ -8,9 +8,8 @@ import ClientLogin from './ClientLogin';
 import Nav from '../../components/navbar/Nav';
 
 const Login = () => {
-  const [activeSection, setActiveSection] = useState('lawyer')
+  const [activeSection, setActiveSection] = useState('client')
 
-  
   const toggleSection = (section) => {
     setActiveSection(section);
   };
@@ -70,4 +69,3 @@ const Login = () => {
 }
 
 export default Login
-

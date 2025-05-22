@@ -73,7 +73,7 @@ const ClientLogin = () => {
 
   return (
 
-        <div className="bg-gray-800/70 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-gray-700/50 relative overflow-hidden">
+        <div className="bg-gray-800/70 backdrop-blur-lg p-14 rounded-2xl shadow-2xl border border-gray-700/50 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 rounded-full blur-3xl"></div>
           <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 rounded-full blur-3xl"></div>         
           <h2 className="text-2xl font-bold mb-6 text-center text-white">Client Login</h2>
@@ -201,7 +201,6 @@ const ClientLogin = () => {
             </form>
           )}
 
-          {/* Signup Link */}
           <div className="text-center mt-8">
              <p className="text-center text-sm text-gray-300 mt-4">
               Not signed up yet?{' '}
@@ -216,8 +215,8 @@ const ClientLogin = () => {
         </div>
       
   
-  );
-};
+  )
+}
 
-export default ClientLogin;
+export default ClientLogin
 

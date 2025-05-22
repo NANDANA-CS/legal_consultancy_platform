@@ -23,7 +23,7 @@ const LawyerLogin = () => {
       if (response.ok) {
         localStorage.setItem('token', data.token);
         toast.success('Login successful!', { theme: 'dark' });
-        navigate('/dashboard');
+        navigate('/');
       } else {
         toast.error(data.message || 'Login failed', { theme: 'dark' });
       }
@@ -73,7 +73,7 @@ const LawyerLogin = () => {
          <p className="text-center text-sm text-gray-300 mt-4">
               Not signed up yet?{' '}
               <a
-                href="/signup"
+                href="/lawyersignup"
                 className="text-blue-600 hover:text-blue-700 underline font-medium transition-colors"
               >
                 Sign Up
