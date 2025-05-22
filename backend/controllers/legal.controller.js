@@ -6,6 +6,8 @@ import Lawyer from '../models/lawyer.model.js';
 // lawyer signup
 export const signup = async (req, res) => {
   console.log(req.body)
+  console.log("sadsad")
+ console.log( req.files.profilePic[0].filename)
   const {
     name,
     email,
@@ -17,19 +19,23 @@ export const signup = async (req, res) => {
     currentWorkplace,
     role,
   } = req.body;
-  
+
   try {
     let user = await Lawyer.findOne({ email });
     console.log("inside signup");
     console.log(user)
     if (user) {
-      return res.status(400).json({ message: 'Email already registered' });
+      console.log({ message: 'Email already registered' })
+      console.log({'Email already registered':user})
+      return res.status(400).send({ message: 'Email already registered' });
     }
-    
+    console.log(" signup");
+
 
     if (role === 'lawyer') {
       const existingLawyer = await Lawyer.findOne({ barRegistrationNumber });
       if (existingLawyer) {
+        console.log({ message: 'Bar Registration Number already in use' })
         return res.status(400).json({ message: 'Bar Registration Number already in use' });
       }
     }
@@ -42,11 +48,10 @@ export const signup = async (req, res) => {
 
     if (role === 'lawyer') {
       if (!name || !email || !password || !phoneNumber || !barRegistrationNumber ||
-          !barCouncilState || !yearsOfExperience || !currentWorkplace) {
+        !barCouncilState || !yearsOfExperience || !currentWorkplace) {
         return res.status(400).json({ message: 'All required fields must be provided' });
       }
     }
-
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
@@ -61,7 +66,7 @@ export const signup = async (req, res) => {
         barCouncilState,
         yearsOfExperience: Number(yearsOfExperience),
         currentWorkplace,
-        profilePic: req.files.profilePic[0].path,
+        profilePic: req.files.profilePic[0].filename,
       });
     } else {
       user = new Lawyer({ name, email, password: hashedPassword, role: 'lawyer' });
@@ -219,6 +224,7 @@ export const getUserData = async (req, res) => {
 
     res.json({
       id: user._id,
+      profilepic: user.profilepic || user.profilePic,
       name: user.name,
       email: user.email,
       role: user.role,

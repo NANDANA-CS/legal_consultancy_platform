@@ -70,6 +70,7 @@ const LawyerSignup = () => {
         method: 'POST',
         body: data,
       });
+      console.log(response)
       const result = await response.json();
       if (response.ok) {
         localStorage.setItem('token', result.token);
