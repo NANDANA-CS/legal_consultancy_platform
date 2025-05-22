@@ -68,7 +68,7 @@ const LawyerLogin = () => {
           type="submit"
           className="w-full bg-blue-600 hover:bg-blue-700 text-white p-2 rounded font-medium"
         >
-        Login
+        Login as Lawyer
         </button>
          <p className="text-center text-sm text-gray-300 mt-4">
               Not signed up yet?{' '}

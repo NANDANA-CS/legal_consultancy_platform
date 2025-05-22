@@ -9,21 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const Home = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const decoded = jwtDecode(token);
-        setUser({
-          name: decoded.name || decoded.email || 'User',
-          role: decoded.role || 'client',
-        });
-      } catch (err) {
-        console.error('Invalid JWT token', err);
-        localStorage.removeItem('token');
-      }
-    }
-  }, [])
+  
 
   const handleChatClick = () => {
     toast.info('Chat feature coming soon!', {

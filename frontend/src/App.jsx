@@ -9,6 +9,7 @@ import LawyerLogin from './pages/login/LawyerLogin'
 import ClientLogin from './pages/login/ClientLogin'
 import Login from './pages/login/Login'
 import LawyerSignup from './pages/signup/Lawyersignup'
+import Clientsignup from './pages/signup/Clientsignup'
 
 
 const App = () => {
@@ -24,8 +25,7 @@ const App = () => {
           <Route path='/ClientLogin' Component={ClientLogin} />
           <Route path='/login' Component={Login} />
           <Route path='/lawyersignup' Component={LawyerSignup} />
-
-
+          <Route path='/clientsignup' Component={Clientsignup}/>
         </Routes>
 
       </BrowserRouter>

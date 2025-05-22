@@ -8,7 +8,7 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <Auth0Provider
       domain="dev-dwidrngxdwz2oh0g.us.auth0.com"
-      clientId="PNvy8fjhl6JWTwsyLcOQH6nCIbDbY6B2"
+      clientId="Wl1sPYl6VhfXMYSo3jFvldGRhtSV5Yh4"
       authorizationParams={{
         redirect_uri: window.location.origin
       }}
