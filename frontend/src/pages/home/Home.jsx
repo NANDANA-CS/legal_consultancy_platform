@@ -9,7 +9,7 @@ import 'react-toastify/dist/ReactToastify.css';
 const Home = () => {
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
-  
+
 
   const handleChatClick = () => {
     toast.info('Chat feature coming soon!', {
@@ -30,14 +30,14 @@ const Home = () => {
       <div className="bg-gray-800 text-white min-h-screen pt-24 mt-10">
         <div className="w-full h-300 bg-[url('/images/hoe.jpg')] bg-no-repeat bg-contain relative">
           <div className='absolute top-1/3 left-1/2 transform -translate-x-1/2 -translate-y-1/2'>
-            <h1 className="text-7xl sm:text-5xl font-bold mb-6 text-black">
-            Online Legal Consultancy Platform
-          </h1>
-          <p className="text-lg text-center  sm:text-xl text-gray-300 mb-1 text-black">
-            {user
-              ? `Hello, ${user.name}! Connect with expert lawyers for your legal needs.`
-              : 'Connect with expert lawyers, book consultations, and track your cases seamlessly.'}
-          </p>
+            <h1 className="text-7xl sm:text-6xl font-bold mb-6 text-white">
+              Online Legal Consultancy Platform
+            </h1>
+            <p className="text-lg text-center  sm:text-2xl text-gray-300 mb-1 text-black">
+              {user
+                ? `Hello, ${user.name}! Connect with expert lawyers for your legal needs.`
+                : 'Connect with expert lawyers, book consultations, and track your cases seamlessly.'}
+            </p>
           </div>
         </div>
 
@@ -70,7 +70,7 @@ const Home = () => {
                 >
                   Chat with Lawyers
                 </button>
-              
+
               </div>
             </div>
           </div>

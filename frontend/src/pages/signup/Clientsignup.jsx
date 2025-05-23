@@ -72,7 +72,7 @@ const Clientsignup = () => {
           <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
            <div>
               <label htmlFor="profilePic" className="block text-sm font-medium text-gray-300 mb-1">
-                Profile Picture (Optional)
+                Profile Picture 
               </label>
               <input
                 type="file"

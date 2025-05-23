@@ -10,6 +10,9 @@ import ClientLogin from './pages/login/ClientLogin'
 import Login from './pages/login/Login'
 import LawyerSignup from './pages/signup/Lawyersignup'
 import Clientsignup from './pages/signup/Clientsignup'
+import Lawyer from './pages/lawyer/Lawyer'
+import Profile from './pages/profile/Profile'
+import Cases from './pages/cases/Cases'
 
 
 const App = () => {
@@ -26,6 +29,9 @@ const App = () => {
           <Route path='/login' Component={Login} />
           <Route path='/lawyersignup' Component={LawyerSignup} />
           <Route path='/clientsignup' Component={Clientsignup}/>
+          <Route path='/lawyers' Component={Lawyer}/>
+          <Route path='/profile' Component={Profile}/>
+          <Route path='/cases' Component={Cases}/>
         </Routes>
 
       </BrowserRouter>
