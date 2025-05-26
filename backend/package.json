@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "express": "^5.1.0",
+    "express-oauth2-jwt-bearer": "^1.6.1",
     "jsonwebtoken": "^9.0.2",
     "jwks-rsa": "^3.2.0",
     "kirito-lib": "^1.1.1",

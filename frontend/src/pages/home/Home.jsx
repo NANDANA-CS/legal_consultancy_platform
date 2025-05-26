@@ -4,13 +4,66 @@ import Footer from '../../components/footer/Footer';
 import Navbar from '../../components/navbar/Navbar';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { useAuth0 } from "@auth0/auth0-react";
+import axios from 'axios';
 
 
 const Home = () => {
-  const [user, setUser] = useState(null);
+  const [usera, setUsera] = useState(null);
   const navigate = useNavigate();
 
+  const { loginWithRedirect, user, isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
 
+    // ClientLogin.jsx (useEffect snippet)
+useEffect(() => {
+  const saveUserData = async () => {
+    if (isLoading) return;
+    if (!isAuthenticated || !user) return;
+    if (localStorage.getItem('token')) {
+      navigate('/');
+      return;
+    }
+
+    try {
+      const token = await getAccessTokenSilently({
+        audience: "https://dev-dwidrngxdwz2oh0g.us.auth0.com/api/v2/",
+        scope: 'read:current_user openid profile email',
+      });
+      console.log('Access token parts:', token.split('.').length);
+
+      if (token.split('.').length !== 3) {
+        throw new Error('Invalid token: Not a JWT');
+      }
+
+      const userData = {
+        auth0Id: user.sub,
+        name: user.name || user.email || 'Unknown User',
+        email: user.email || '',
+        picture: user.picture || '',
+      };
+
+      const response = await axios.post(
+        'http://localhost:3000/api/authsignup',
+        userData,
+        {
+          headers: {
+            Authorization: `Bearer ${token.trim()}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      localStorage.setItem('token', response.data.token);
+      toast.success('Login successful!', { theme: 'dark' });
+      navigate('/');
+    } catch (err) {
+      console.error('Error in saveUserData:', err.response?.data || err.message);
+      toast.error(err.response?.data?.message || 'Failed to save user data', { theme: 'dark' });
+    }
+  };
+
+  saveUserData();
+}, [isAuthenticated, user, isLoading, getAccessTokenSilently, navigate]);
   const handleChatClick = () => {
     toast.info('Chat feature coming soon!', {
       position: 'top-right',
@@ -34,8 +87,8 @@ const Home = () => {
               Online Legal Consultancy Platform
             </h1>
             <p className="text-lg text-center  sm:text-2xl text-gray-300 mb-1 text-black">
-              {user
-                ? `Hello, ${user.name}! Connect with expert lawyers for your legal needs.`
+              {usera
+                ? `Hello, ${usera.name}! Connect with expert lawyers for your legal needs.`
                 : 'Connect with expert lawyers, book consultations, and track your cases seamlessly.'}
             </p>
           </div>

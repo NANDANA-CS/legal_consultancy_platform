@@ -6,10 +6,7 @@ import { useNavigate } from 'react-router-dom';
 
 const LoginButton = () => {
   const { loginWithRedirect, user, isAuthenticated, getAccessTokenSilently, isLoading } = useAuth0();
-  const navigate = useNavigate();
-
-  
-
+  const navigate = useNavigate()
   return (
     <button
       onClick={() =>
