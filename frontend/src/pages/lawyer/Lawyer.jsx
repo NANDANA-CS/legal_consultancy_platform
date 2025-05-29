@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
 import axios from 'axios';
-import { toast } from 'react-toastify';
+import { toast, ToastContainer } from 'react-toastify';
 import Navbar from '../../components/navbar/Navbar';
 import Footer from '../../components/footer/Footer';
 
 const Lawyers = () => {
   const { user, isAuthenticated, getAccessTokenSilently } = useAuth0();
   const [lawyers, setLawyers] = useState([]);
+  const [filteredLawyers, setFilteredLawyers] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchLawyers = async () => {
@@ -36,6 +38,7 @@ const Lawyers = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setLawyers(response.data);
+        setFilteredLawyers(response.data);
         setLoading(false);
       } catch (err) {
         console.error('Error fetching lawyers:', err);
@@ -46,6 +49,22 @@ const Lawyers = () => {
 
     fetchLawyers();
   }, [isAuthenticated, getAccessTokenSilently, navigate]);
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(location.search);
+    const searchQuery = queryParams.get('search')?.toLowerCase() || '';
+    const filtered = lawyers.filter(
+      (lawyer) =>
+        (lawyer.name?.toLowerCase() || '').includes(searchQuery) ||
+        (lawyer.currentWorkplace?.toLowerCase() || '').includes(searchQuery) ||
+        (lawyer.barCouncilState?.toLowerCase() || '').includes(searchQuery)
+    );
+    setFilteredLawyers(filtered);
+  }, [location.search, lawyers]);
+
+  const handleLawyerClick = (lawyerId) => {
+    navigate(`/lawyersdet/${lawyerId}`);
+  };
 
   if (loading) {
     return (
@@ -58,34 +77,39 @@ const Lawyers = () => {
   return (
     <>
       <Navbar />
+      <ToastContainer />
       <div className="bg-gray-800 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30">
-        <h2 className="text-3xl font-bold text-center mb-12">Consult Our Expert Lawyers</h2>
-        {lawyers.length === 0 ? (
-          <p className="text-center text-gray-300">No lawyers found.</p>
+        <h2 className="text-5xl font-bold text-center mb-22 text-gray-300">Consult Our Expert Lawyers</h2>
+        {filteredLawyers.length === 0 ? (
+          <p className="text-center text-gray-300">No lawyers found matching your search.</p>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {lawyers.map((lawyer) => (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-8xl mx-auto">
+            {filteredLawyers.map((lawyer) => (
               <div
                 key={lawyer._id}
-                className="bg-gray-900 p-6 rounded-xl shadow-lg hover:shadow-2xl transition"
+                className="bg-gray-900 p-6 rounded-xl shadow-lg hover:shadow-2xl transition cursor-pointer"
+                onClick={() => handleLawyerClick(lawyer._id)}
               >
                 <img
                   src={lawyer.profilePic ? `http://localhost:3000/images/${lawyer.profilePic}` : '/images/default-profile.png'}
                   alt={lawyer.name}
-                  className="h-24 w-24 rounded-full object-cover mx-auto mb-4"
+                  className="h-34 w-34 rounded-full object-cover mx-auto mb-4"
                 />
-                <h3 className="text-xl font-semibold text-center text-white">{lawyer.name}</h3>
-                <p className="text-gray-300 text-center">{lawyer.email}</p>
-                <p className="text-gray-300 text-center">Phone: {lawyer.phoneNumber}</p>
-                <p className="text-gray-300 text-center">Bar Reg: {lawyer.barRegistrationNumber}</p>
-                <p className="text-gray-300 text-center">State: {lawyer.barCouncilState}</p>
-                <p className="text-gray-300 text-center">Experience: {lawyer.yearsOfExperience} years</p>
-                <p className="text-gray-300 text-center">Workplace: {lawyer.currentWorkplace}</p>
+                  <h3 className="text-4xl font-semibold text-white ">{lawyer.name}</h3>
+                <div className='display flex justify-between'>
+                  <div>
+                  <p className="text-gray-300 ">email: {lawyer.email}</p>
+                  <p className="text-gray-300 ">Phone: {lawyer.phoneNumber}</p>
+                  
+                </div>
+                </div>
                 <button
-                  onClick={() => toast.info('Consultation booking coming soon!', { theme: 'dark' })}
+                  onClick={() =>navigate('/lawyerdetails') 
+                  
+                  }
                   className="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-md font-medium"
                 >
-                  Book Consultation
+                 View Details
                 </button>
               </div>
             ))}

@@ -2,6 +2,35 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import Client from '../models/client.model.js';
 import Lawyer from '../models/lawyer.model.js';
+import Appointment from '../models/appoinment.model.js'
+import Consultation from '../models/consultation.model.js'
+import multer from "multer"
+import path from "path"
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/');
+  },
+  filename: (req, file, cb) => {
+    cb(null, `${Date.now()}-${file.originalname}`);
+  },
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  fileFilter: (req, file, cb) => {
+    const filetypes = /pdf|jpeg|jpg|png/;
+    const mimetype = filetypes.test(file.mimetype);
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    if (mimetype && extname) {
+      return cb(null, true);
+    }
+    cb(new Error('Only PDF, JPEG, or PNG files are allowed'));
+  },
+}).single('file');
+
+
 
 // Lawyer signup
 export const signup = async (req, res) => {
@@ -188,8 +217,6 @@ export const clientLogin = async (req, res) => {
 };
 
 // Auth0 Signup
-// Auth0 Signup - Improved version
-// controllers/legal.controller.js (authSignup only)
 export const authSignup = async (req, res) => {
   console.log('\n=== AUTH0 SIGNUP REQUEST START ===');
   console.log('Timestamp:', new Date().toISOString());
@@ -198,15 +225,14 @@ export const authSignup = async (req, res) => {
   console.log('Decoded token payload:', JSON.stringify(req.auth0User, null, 2));
 
   try {
-    const { name, email, picture, auth0Id } = req.body; // From ClientLogin.jsx
-    const tokenPayload = req.auth0User; // From token
+    const { name, email, picture, auth0Id } = req.body;
+    const tokenPayload = req.auth0User;
 
     if (!process.env.JWT_KEY) {
       console.error('JWT_KEY is not defined');
       return res.status(500).json({ message: 'Server configuration error' });
     }
 
-    // Validate required fields
     if (!auth0Id || !email || !name) {
       console.error('Missing required fields:', { auth0Id, email, name });
       return res.status(400).json({
@@ -215,7 +241,6 @@ export const authSignup = async (req, res) => {
       });
     }
 
-    // Verify token payload matches body
     if (tokenPayload.sub !== auth0Id || tokenPayload.email !== email) {
       console.error('Token payload mismatch:', {
         tokenSub: tokenPayload.sub,
@@ -226,7 +251,6 @@ export const authSignup = async (req, res) => {
       return res.status(400).json({ message: 'Token payload does not match request data' });
     }
 
-    // Check for existing user
     let existingClient = await Client.findOne({
       $or: [{ auth0Id }, { email: email.toLowerCase().trim() }],
     });
@@ -255,7 +279,6 @@ export const authSignup = async (req, res) => {
       });
     }
 
-    // Create new user
     const newClient = new Client({
       name: name.trim(),
       email: email.toLowerCase().trim(),
@@ -299,26 +322,159 @@ export const authSignup = async (req, res) => {
   }
 };
 
-
 // Get user
 export const getUserData = async (req, res) => {
   try {
-    const userEmail = req.userEmail;
-    const user = await Client.findOne({ email: userEmail }) || await Lawyer.findOne({ email: userEmail });
+    console.log(req.id)
+    const id = req.id;
+    const user = await Client.findById({ _id: id }) || await Lawyer.findOne({ _id: id });
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     res.json({
       id: user._id,
-      profilepic: user.profilepic || user.profilePic,
+      profilePic: user.profilepic || user.profilePic,
       name: user.name,
       email: user.email,
       role: user.role,
+      phoneNumber: user.phoneNumber || null,
+      barRegistrationNumber: user.barRegistrationNumber || null,
+      barCouncilState: user.barCouncilState || null,
+      yearsOfExperience: user.yearsOfExperience || null,
+      currentWorkplace: user.currentWorkplace || null,
+      expertise: user.expertise || null,
+      availabilitySlots: user.availabilitySlots || [],
     });
   } catch (err) {
     console.error('Get User Data Error:', err.message);
     res.status(500).json({ message: 'Server error fetching user data' });
+  }
+};
+
+// Update user profile
+export const updateUserProfile = async (req, res) => {
+  try {
+    const id = req.id;
+    const {
+      name,
+      email,
+      phoneNumber,
+      role,
+      barRegistrationNumber,
+      barCouncilState,
+      yearsOfExperience,
+      currentWorkplace,
+      expertise,
+      availabilitySlots,
+      profilePic,
+    } = req.body;
+
+    console.log(req.body)
+
+    // Validation
+    if (!name) {
+      return res.status(400).json({ message: 'Name is required' });
+    }
+
+    if (!email) {
+      return res.status(400).json({message:"email is required"})
+    }
+    if (role === 'lawyer') {
+      if (!barRegistrationNumber) {
+        return res.status(400).json({ message: 'Bar Registration Number is required for lawyers' });
+      }
+      if (!barCouncilState) {
+        return res.status(400).json({ message: 'Bar Council State is required for lawyers' });
+      }
+      // Check if barRegistrationNumber is unique (exclude current user)
+      const existingLawyer = await Lawyer.findOne({
+        barRegistrationNumber,
+        _id: { $ne: id },
+      });
+      if (existingLawyer) {
+        return res.status(400).json({ message: 'Bar Registration Number already in use' });
+      }
+    }
+
+    // Clean availability slots
+    let cleanedSlots = [];
+    if (Array.isArray(availabilitySlots)) {
+      cleanedSlots = availabilitySlots.filter(
+        (slot) =>
+          slot.day &&
+          ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].includes(slot.day) &&
+          slot.startTime &&
+          slot.endTime
+      );
+    }
+
+    const updateData = {
+      name: name.trim(),
+      phoneNumber: phoneNumber || null,
+      profilePic: profilePic || null,
+      email:email||null
+    };
+
+    if (role === 'lawyer') {
+      updateData.barRegistrationNumber = barRegistrationNumber || null;
+      updateData.barCouncilState = barCouncilState || null;
+      updateData.yearsOfExperience = yearsOfExperience ? Number(yearsOfExperience) : null;
+      updateData.currentWorkplace = currentWorkplace || null;
+      updateData.expertise = expertise || null;
+      updateData.availabilitySlots = cleanedSlots;
+    }
+    console.log("hiii hello")
+
+    let updatedUser;
+    if (role === 'client') {
+      updatedUser = await Client.findOneAndUpdate(
+        { _id: id },
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+    } else if (role === 'lawyer') {
+      updatedUser = await Lawyer.findOneAndUpdate(
+        { _id: id },
+        { $set: updateData },
+        { new: true, runValidators: true }
+      );
+    }
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      id: updatedUser._id,
+      profilePic: updatedUser.profilepic || updatedUser.profilePic,
+      name: updatedUser.name,
+      email: updatedUser.email,
+      role: updatedUser.role,
+      phoneNumber: updatedUser.phoneNumber || null,
+      barRegistrationNumber: updatedUser.barRegistrationNumber || null,
+      barCouncilState: updatedUser.barCouncilState || null,
+      yearsOfExperience: updatedUser.yearsOfExperience || null,
+      currentWorkplace: updatedUser.currentWorkplace || null,
+      expertise: updatedUser.expertise || null,
+      availabilitySlots: updatedUser.availabilitySlots || [],
+    });
+  } catch (err) {
+    console.error('Update Profile Error:', err.message);
+    res.status(500).json({ message: 'Server error updating profile' });
+  }
+};
+
+// Upload profile picture
+export const uploadProfilePic = async (req, res) => {
+  try {
+    if (!req.files || !req.files.profilePic) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
+    const filePath = req.files.profilePic[0].filename;
+    res.json({ filePath });
+  } catch (err) {
+    console.error('Upload Profile Pic Error:', err.message);
+    res.status(400).json({ message: 'Error uploading profile picture' });
   }
 };
 
@@ -336,8 +492,245 @@ export const getLawyers = async (req, res) => {
   }
 };
 
+// Get lawyer details by ID
+export const getLawyersdet = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const lawyer = await Lawyer.findById(id);
+    if (!lawyer) {
+      return res.status(404).json({ message: 'Lawyer not found' });
+    }
+    res.json(lawyer);
+  } catch (err) {
+    console.error('Get Lawyer Details Error:', err.message);
+    res.status(500).json({ message: 'Server error fetching lawyer details' });
+  }
+};
 
 
+export const getDashboardData = async (req, res) => {
+  try {
+    const userId = req.id;
+    let user = await Client.findById(userId);
+    let role = 'client';
+    let consultations = [];
 
+    if (!user) {
+      user = await Lawyer.findById(userId);
+      role = 'lawyer';
+    }
 
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
 
+    if (role === 'client') {
+      consultations = await Consultation.find({ clientId: userId })
+        .populate('lawyerId', 'name email profilePic')
+        .sort({ dateTime: 1 });
+    } else {
+      consultations = await Consultation.find({ lawyerId: userId })
+        .populate('clientId', 'name email profilePic')
+        .sort({ dateTime: 1 });
+    }
+
+    res.json({
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role,
+        profilePic: user.profilePic,
+      },
+      consultations,
+    });
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const createConsultation = async (req, res) => {
+  try {
+    const { clientId, lawyerId, dateTime, notes, meetLink } = req.body;
+
+    if (!clientId || !lawyerId || !dateTime || !meetLink) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    if (req.id !== clientId) {
+      return res.status(403).json({ message: 'Unauthorized client ID' });
+    }
+
+    const consultation = new Consultation({
+      clientId,
+      lawyerId,
+      dateTime: new Date(dateTime),
+      notes: notes || '',
+      meetLink,
+      status: 'scheduled',
+      accept: false,
+    });
+
+    await consultation.save();
+
+    const populatedConsultation = await Consultation.findById(consultation._id)
+      .populate('clientId', 'name email profilePic')
+      .populate('lawyerId', 'name email profilePic');
+
+    res.status(201).json(populatedConsultation);
+  } catch (error) {
+    console.error('Error creating consultation:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const acceptConsultation = async (req, res) => {
+  try {
+    const consultationId = req.params.id;
+    const consultation = await Consultation.findById(consultationId);
+
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    if (consultation.lawyerId.toString() !== req.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    consultation.accept = true;
+    await consultation.save();
+
+    res.json({ message: 'Consultation accepted' });
+  } catch (error) {
+    console.error('Error accepting consultation:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const declineConsultation = async (req, res) => {
+  try {
+    const consultationId = req.params.id;
+    const consultation = await Consultation.findById(consultationId);
+
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    if (consultation.lawyerId.toString() !== req.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    consultation.status = 'cancelled';
+    await consultation.save();
+
+    res.json({ message: 'Consultation declined' });
+  } catch (error) {
+    console.error('Error declining consultation:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const cancelConsultation = async (req, res) => {
+  try {
+    const consultationId = req.params.id;
+    const consultation = await Consultation.findById(consultationId);
+
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    if (consultation.clientId.toString() !== req.id) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    if (consultation.accept) {
+      return res.status(400).json({ message: 'Cannot cancel an accepted consultation' });
+    }
+
+    consultation.status = 'cancelled';
+    await consultation.save();
+
+    res.json({ message: 'Consultation cancelled' });
+  } catch (error) {
+    console.error('Error cancelling consultation:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const uploadDocument = async (req, res) => {
+  upload(req, res, async (err) => {
+    if (err) {
+      console.error('Multer error:', err.response?.data?.message || err.message)
+      return res.status(400).json({ message: err.message });
+    }
+
+    try {
+      const { consultationId, lawyerId } = req.body;
+      const clientId = req.user.id;
+
+      const consultation = await findOne(ConsultationById(consultationId));
+
+      if (!consultation) {
+        return res.status(404).json({ message: 'Consultation not found' });
+      }
+
+      if (consultation.clientId.toString() !== clientId.clientId) {
+        return res.status(403).json({ message: 'Unauthorized' });
+      }
+
+      if (!consultation.accept) {
+        return res.status(400).json({ message: 'Documents can only be uploaded for accepted consultations' });
+      }
+
+      if (consultation.lawyerId.toString() !== lawyerId) {
+        return res.status(400).json({ message: 'Invalid lawyer ID for this consultation' });
+      }
+
+      const document = new Document({
+        ownerId: clientId,
+        lawyerId: lawyerId,
+        filename: req.file.filename,
+        filepath: `/uploads/${req.file.filename}`,
+      });
+
+      await document.save();
+
+      res.status(201).json(document);
+    } catch (error) {
+      console.error('Error uploading document:', error.response?.data || error.message);
+      res.status(500).json({ message: 'Server error' });
+    }
+  });
+};
+
+export const getDocumentsByConsultation = async (req, res) => {
+  try {
+    const consultationId = req.params.id;
+    const userId = req.user.id;
+
+    const consultation = await Consultation.findById(consultationId);
+
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    // Allow access if user is client or lawyer
+    if (
+      consultation.clientId.toString() !== userId &&
+      consultation.lawyerId.toString() !== userId
+    ) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    const documents = await Document.find({
+      ownerId: consultation.clientId,
+      lawyerId: consultation.lawyerId,
+    }).sort({ uploadedAt: -1 });
+
+    res.json(documents);
+  } catch (error) {
+    console.error('Error fetching documents:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

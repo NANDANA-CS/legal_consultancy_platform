@@ -7,7 +7,8 @@ const auth = (req, res, next) => {
     }
     try {
         const decoded = jwt.verify(token, process.env.JWT_KEY)
-        req.userEmail = decoded.email
+        req.id = decoded.id
+
         next()
     } catch (err) {
         console.error('Token verification error:', err.message)

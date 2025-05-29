@@ -12,4 +12,4 @@ const clientSchema = new mongoose.Schema({
   picture: { type: String },
 });
 
-export default mongoose.model('Client', clientSchema);
+export default mongoose.model('Client', clientSchema);  
