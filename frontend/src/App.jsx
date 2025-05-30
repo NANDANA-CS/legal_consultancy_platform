@@ -11,8 +11,6 @@ import ClientLogin from './pages/login/ClientLogin'
 import Login from './pages/login/Login'
 import LawyerSignup from './pages/signup/Lawyersignup'
 import Clientsignup from './pages/signup/Clientsignup'
-
-import Cases from './pages/cases/Cases'
 import Profile from './pages/profile/Profile'
 import LawyerDetails from './pages/lawyer/LawyerDetails'
 import Lawyers from './pages/lawyer/Lawyer'
@@ -22,6 +20,8 @@ import ClientDashboard from './pages/dashboard/Clientdashboard'
 import Consultation from './pages/consultation/Consultation'
 import Appoinments from './pages/Appoinments/Appoinments'
 import Myappoinments from './pages/Appoinments/Myappoinments'
+import CaseDetails from './pages/cases/CaseDetails'
+import Case from './pages/cases/Case'
 
 
 const App = () => {
@@ -40,17 +40,15 @@ const App = () => {
           <Route path='/clientsignup' Component={Clientsignup} />
           <Route path='/lawyers' Component={Lawyers} />
           <Route path="/lawyersdet/:id" Component={LawyerDetails} />
-
           <Route path='/profile' Component={Profile} />
           <Route path='/editprofile' Component={Editprofile} />
-
-          <Route path='/cases' Component={Cases} />
           <Route path="/lawyers/:id/consultation" Component={Consultation} />
           <Route path='/appoinments' Component={Appoinments}/>
           <Route path='/myappoinments' Component={Myappoinments}/>
           <Route path='/lawyerdashboard' Component={LawyerDashboard} />
           <Route path='/clientdashboard' Component={ClientDashboard} />
-
+          <Route path='/casedetails/:caseId' Component={CaseDetails}/>
+          <Route path='/case/:consultationId/:lawyerId' Component={Case}/>
         </Routes>
 
       </BrowserRouter>

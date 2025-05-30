@@ -79,7 +79,7 @@ const Profile = () => {
       <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-center text-gray-100 mt-40">Your Profile</h1>
         <div className="max-w-6xl mx-auto bg-gradient-to-br from-gray-800 to-gray-850 p-10 rounded-2xl shadow-2xl flex flex-col md:flex-row gap-12 min-h-[600px] transition-transform duration-300 hover:scale-[1.01] mt-10">
-          {/* Profile Image */}
+      
           <div className="flex-shrink-0 flex justify-center md:justify-start">
             <img
               src={

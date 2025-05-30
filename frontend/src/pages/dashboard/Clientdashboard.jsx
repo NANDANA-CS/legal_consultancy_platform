@@ -13,7 +13,7 @@ const ClientDashboard = () => {
   const [dashboardData, setDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [documents, setDocuments] = useState({});
-  const [selectedFiles, setSelectedFiles] = useState({});
+  const [cases, setCases] = useState({});
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -41,10 +41,9 @@ const ClientDashboard = () => {
         console.log('Dashboard data:', response.data);
         setDashboardData(response.data);
         setLoading(false);
-        toast.success('Successfully fetched dashboard data', { theme: 'dark' });
 
-        // Fetch documents for each consultation
         if (response.data.consultations) {
+          // Fetch documents
           const docsPromises = response.data.consultations.map((consultation) =>
             axios.get(`http://localhost:3000/api/documents/consultation/${consultation._id}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -56,6 +55,19 @@ const ClientDashboard = () => {
             docsMap[response.data.consultations[index]._id] = res.data;
           });
           setDocuments(docsMap);
+
+          // Fetch cases
+          const casesPromises = response.data.consultations.map((consultation) =>
+            axios.get(`http://localhost:3000/api/cases/consultation/${consultation._id}`, {
+              headers: { Authorization: `Bearer ${token}` },
+            })
+          );
+          const casesResponses = await Promise.all(casesPromises);
+          const casesMap = {};
+          casesResponses.forEach((res, index) => {
+            casesMap[response.data.consultations[index]._id] = res.data;
+          });
+          setCases(casesMap);
         }
       } catch (error) {
         console.error('Error fetching dashboard data:', error.response?.data || error.message);
@@ -66,72 +78,6 @@ const ClientDashboard = () => {
 
     fetchDashboardData();
   }, [isAuthenticated, getAccessTokenSilently, navigate]);
-
-  const handleFileChange = (consultationId, event) => {
-    setSelectedFiles((prev) => ({
-      ...prev,
-      [consultationId]: event.target.files[0],
-    }));
-  };
-
-  const handleUpload = async (consultationId, lawyerId) => {
-    const file = selectedFiles[consultationId];
-    if (!file) {
-      toast.error('Please select a file to upload', { theme: 'dark' });
-      return;
-    }
-
-    // Validate file size (e.g., max 5MB) and type
-    const maxSize = 5 * 1024 * 1024; // 5MB
-    const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
-    if (file.size > maxSize) {
-      toast.error('File size exceeds 5MB limit', { theme: 'dark' });
-      return;
-    }
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Only PDF, JPEG, or PNG files are allowed', { theme: 'dark' });
-      return;
-    }
-
-    try {
-      let token;
-      if (isAuthenticated) {
-        token = await getAccessTokenSilently({
-          audience: 'https://dev-dwidrngxdwz2oh0g.us.auth0.com/api/v2/',
-          scope: 'read:current_user',
-        });
-      } else {
-        token = localStorage.getItem('token');
-      }
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('consultationId', consultationId);
-      formData.append('lawyerId', lawyerId);
-
-      const response = await axios.post('http://localhost:3000/api/documents/upload', formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      // Update documents state
-      setDocuments((prev) => ({
-        ...prev,
-        [consultationId]: [...(prev[consultationId] || []), response.data],
-      }));
-      setSelectedFiles((prev) => {
-        const newFiles = { ...prev };
-        delete newFiles[consultationId];
-        return newFiles;
-      });
-      toast.success('Document uploaded successfully', { theme: 'dark' });
-    } catch (error) {
-      console.error('Error uploading document:', error.response?.data || error.message);
-      toast.error(error.response?.data?.message || 'Failed to upload document', { theme: 'dark' });
-    }
-  };
 
   if (loading) {
     return (
@@ -156,11 +102,11 @@ const ClientDashboard = () => {
     <>
       <ToastContainer />
       <Navbar />
-      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-40">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-100 tracking-tight">
           Client Dashboard
         </h1>
-        <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-800 to-gray-850 p-10 rounded-2xl shadow-xl min-h-[600px] transition-transform duration-300 hover:scale-[1.01]">
+        <div className="max-w-7xl mx-auto bg-gradient-to-br from-gray-800 to-gray-850 p-10 rounded-2xl shadow-xl min-h-[600px] transition-transform duration-300 hover:scale-[1.01]">
           <h3 className="text-3xl font-semibold text-gray-100 mb-6">Welcome, {user.name}</h3>
           <div className="space-y-6">
             <div className="flex gap-4">
@@ -177,7 +123,7 @@ const ClientDashboard = () => {
                 Find Lawyers
               </button>
               <button
-                onClick={() => navigate('/my-appointments')}
+                onClick={() => navigate('/myappoinments')}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300"
               >
                 My Appointments
@@ -209,6 +155,11 @@ const ClientDashboard = () => {
                             <p className="text-gray-400">
                               Acceptance: {consultation.accept ? 'Accepted' : 'Pending'}
                             </p>
+                            {cases[consultation._id]?.length > 0 && (
+                              <p className="text-gray-400">
+                                Case Status: {cases[consultation._id][0].status}
+                              </p>
+                            )}
                             {consultation.notes && (
                               <p className="text-gray-500 text-sm">{consultation.notes}</p>
                             )}
@@ -216,42 +167,17 @@ const ClientDashboard = () => {
                         </div>
                         {consultation.accept && (
                           <div className="space-y-2">
-                            <h4 className="text-sm font-semibold text-gray-200">Upload Document</h4>
-                            <div className="flex gap-2">
-                              <input
-                                type="file"
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                onChange={(e) => handleFileChange(consultation._id, e)}
-                                className="text-sm text-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-gray-700 file:text-white hover:file:bg-gray-600"
-                              />
+                            {cases[consultation._id]?.length > 0 ? (
+                              <p className="text-green-400 font-semibold text-sm">Case Registered</p>
+                            ) : (
                               <button
-                                onClick={() => handleUpload(consultation._id, consultation.lawyerId)}
+                                onClick={() =>
+                                  navigate(`/case/${consultation._id}/${consultation.lawyerId._id}`)
+                                }
                                 className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 text-sm"
                               >
-                                Upload
+                                Register Case
                               </button>
-                            </div>
-                            {documents[consultation._id]?.length > 0 && (
-                              <div>
-                                <h4 className="text-sm font-semibold text-gray-200 mt-4">Uploaded Documents</h4>
-                                <ul className="space-y-2">
-                                  {documents[consultation._id].map((doc) => (
-                                    <li key={doc._id} className="bg-gray-700 p-2 rounded-lg">
-                                      <a
-                                        href={`http://localhost:3000${doc.filepath}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-gray-300 hover:text-blue-400 text-sm"
-                                      >
-                                        {doc.filename}
-                                      </a>
-                                      <p className="text-gray-500 text-xs">
-                                        Uploaded: {new Date(doc.uploadedAt).toLocaleString()}
-                                      </p>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
                             )}
                           </div>
                         )}

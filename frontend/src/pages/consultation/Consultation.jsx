@@ -9,7 +9,7 @@ import Footer from '../../components/footer/Footer';
 import { v4 as uuidv4 } from 'uuid';
 
 const Consultation = () => {
-  const { id } = useParams(); // Lawyer ID
+  const { id } = useParams();
   const { isAuthenticated, getAccessTokenSilently, user } = useAuth0();
   const navigate = useNavigate();
   const [lawyer, setLawyer] = useState(null);
@@ -20,7 +20,6 @@ const Consultation = () => {
     notes: '',
   });
 
-  // Fetch lawyer and user data
   useEffect(() => {
     const fetchData = async () => {
       if (!isAuthenticated && !localStorage.getItem('token')) {
@@ -37,13 +36,11 @@ const Consultation = () => {
             })
           : localStorage.getItem('token');
 
-        // Fetch lawyer details
         const lawyerResponse = await axios.get(`http://localhost:3000/api/lawyersdet/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setLawyer(lawyerResponse.data);
 
-        // Fetch user data (for clientId)
         if (!isAuthenticated) {
           const userResponse = await axios.get('http://localhost:3000/api/user', {
             headers: { Authorization: `Bearer ${token}` },
@@ -62,13 +59,11 @@ const Consultation = () => {
     fetchData();
   }, [id, isAuthenticated, getAccessTokenSilently, navigate]);
 
-  // Handle form input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.dateTime) {
@@ -95,7 +90,7 @@ const Consultation = () => {
         lawyerId: id,
         dateTime: selectedDate.toISOString(),
         notes: formData.notes,
-        meetLink: `https://meet.example.com/${uuidv4()}`, // Mock meeting link
+        meetLink: `https://meet.example.com/${uuidv4()}`, 
       };
 
       await axios.post('http://localhost:3000/api/consultations', consultationData, {
@@ -132,7 +127,6 @@ const Consultation = () => {
       <ToastContainer />
       <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30 pb-10">
         <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10 mt-10 max-w-6xl mx-auto">
-          {/* Lawyer Profile Picture */}
           <div className="flex-shrink-0 flex justify-center">
             <img
               src={
@@ -144,8 +138,6 @@ const Consultation = () => {
               className="w-60 h-60 sm:w-72 sm:h-72 md:w-80 md:h-80 rounded-lg object-cover border-4 border-gray-600 shadow-lg transition-transform duration-300 hover:scale-105"
             />
           </div>
-
-          {/* Lawyer Details and Form */}
           <div className="flex-1 space-y-6 w-full">
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-semibold tracking-wide pb-2 text-center lg:text-left">
               Book Consultation with {lawyer.name}
@@ -176,8 +168,6 @@ const Consultation = () => {
                 {lawyer.currentWorkplace}
               </p>
             </div>
-
-            {/* Consultation Form */}
             <form onSubmit={handleSubmit} className="space-y-6 bg-gray-800 p-6 rounded-lg shadow-lg">
               <div className='flex justify-between'>
                 <h4 className="text-2xl font-semibold text-gray-100 mb-4">Schedule Your Consultation</h4>

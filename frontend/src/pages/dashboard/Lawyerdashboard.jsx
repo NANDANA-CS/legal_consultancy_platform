@@ -11,56 +11,34 @@ const LawyerDashboard = () => {
   const { isAuthenticated, getAccessTokenSilently } = useAuth0();
   const navigate = useNavigate();
   const [dashboardData, setDashboardData] = useState(null);
-  const [documents, setDocuments] = useState({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        let token;
+        let authToken;
         if (isAuthenticated) {
-          token = await getAccessTokenSilently({
+          authToken = await getAccessTokenSilently({
             audience: 'https://dev-dwidrngxdwz2oh0g.us.auth0.com/api/v2/',
             scope: 'read:current_user',
           });
         } else {
-          token = localStorage.getItem('token');
+          authToken = localStorage.getItem('token');
         }
 
-        if (!token) {
+        if (!authToken) {
           toast.error('No authentication token found. Please log in.', { theme: 'dark' });
           navigate('/login');
           return;
         }
 
         const response = await axios.get('http://localhost:3000/api/dashboard', {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: { Authorization: `Bearer ${authToken}` },
         });
 
         console.log('Dashboard data:', response.data);
         setDashboardData(response.data);
-
-        // Fetch documents for accepted consultations
-        if (response.data.consultations) {
-          const docsPromises = response.data.consultations
-            .filter((consultation) => consultation.accept)
-            .map((consultation) =>
-              axios.get(`http://localhost:3000/api/documents/consultation/${consultation._id}`, {
-                headers: { Authorization: `Bearer ${token}` },
-              })
-            );
-          const docsResponses = await Promise.all(docsPromises);
-          const docsMap = {};
-          response.data.consultations
-            .filter((consultation) => consultation.accept)
-            .forEach((consultation, index) => {
-              docsMap[consultation._id] = docsResponses[index].data;
-            });
-          setDocuments(docsMap);
-        }
-
         setLoading(false);
-        toast.success('Successfully fetched dashboard data', { theme: 'dark' });
       } catch (error) {
         console.error('Error fetching dashboard data:', error.response?.data || error.message);
         toast.error(error.response?.data?.message || 'Failed to fetch dashboard data', { theme: 'dark' });
@@ -162,26 +140,14 @@ const LawyerDashboard = () => {
                             </p>
                           </div>
                         </div>
-                        {consultation.accept && documents[consultation._id]?.length > 0 && (
-                          <div>
-                            <h4 className="text-sm font-semibold text-gray-200 mb-2">Client Documents</h4>
-                            <ul className="space-y-2">
-                              {documents[consultation._id].map((doc) => (
-                                <li key={doc._id} className="bg-gray-700 p-2 rounded-lg">
-                                  <a
-                                    href={`http://localhost:3000${doc.filepath}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-gray-300 hover:text-blue-400 text-sm"
-                                  >
-                                    {doc.filename}
-                                  </a>
-                                  <p className="text-gray-500 text-xs">
-                                    Uploaded: {new Date(doc.uploadedAt).toLocaleString()}
-                                  </p>
-                                </li>
-                              ))}
-                            </ul>
+                        {consultation.accept && consultation.cases?.length > 0 && (
+                          <div className="space-y-2">
+                            <button
+                              onClick={() => navigate(`/casedetails/${consultation.cases[0]._id}`)}
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 text-sm"
+                            >
+                              View Case
+                            </button>
                           </div>
                         )}
                       </div>

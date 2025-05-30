@@ -2,35 +2,18 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 import Client from '../models/client.model.js';
 import Lawyer from '../models/lawyer.model.js';
-import Appointment from '../models/appoinment.model.js'
-import Consultation from '../models/consultation.model.js'
-import multer from "multer"
-import path from "path"
+import Appointment from '../models/appoinment.model.js';
+import Consultation from '../models/consultation.model.js';
+import Document from '../models/document.model.js';
+import multer from 'multer';
+import path, { join } from 'path';
+import url from 'url';
+import fs from 'fs';
+import mime from 'mime-types';
+import Case from '../models/case.model.js';
 
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/');
-  },
-  filename: (req, file, cb) => {
-    cb(null, `${Date.now()}-${file.originalname}`);
-  },
-});
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
-  fileFilter: (req, file, cb) => {
-    const filetypes = /pdf|jpeg|jpg|png/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    if (mimetype && extname) {
-      return cb(null, true);
-    }
-    cb(new Error('Only PDF, JPEG, or PNG files are allowed'));
-  },
-}).single('file');
-
-
+const __filename = url.fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Lawyer signup
 export const signup = async (req, res) => {
@@ -325,9 +308,9 @@ export const authSignup = async (req, res) => {
 // Get user
 export const getUserData = async (req, res) => {
   try {
-    console.log(req.id)
-    const id = req.id;
-    const user = await Client.findById({ _id: id }) || await Lawyer.findOne({ _id: id });
+    console.log(req.id);
+    const id = req.params.id || req.id; // Use params.id for CaseDetails, req.id for auth
+    const user = await Client.findById(id) || await Lawyer.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -370,15 +353,14 @@ export const updateUserProfile = async (req, res) => {
       profilePic,
     } = req.body;
 
-    console.log(req.body)
+    console.log(req.body);
 
-    // Validation
     if (!name) {
       return res.status(400).json({ message: 'Name is required' });
     }
 
     if (!email) {
-      return res.status(400).json({message:"email is required"})
+      return res.status(400).json({ message: 'Email is required' });
     }
     if (role === 'lawyer') {
       if (!barRegistrationNumber) {
@@ -387,7 +369,7 @@ export const updateUserProfile = async (req, res) => {
       if (!barCouncilState) {
         return res.status(400).json({ message: 'Bar Council State is required for lawyers' });
       }
-      // Check if barRegistrationNumber is unique (exclude current user)
+
       const existingLawyer = await Lawyer.findOne({
         barRegistrationNumber,
         _id: { $ne: id },
@@ -397,7 +379,6 @@ export const updateUserProfile = async (req, res) => {
       }
     }
 
-    // Clean availability slots
     let cleanedSlots = [];
     if (Array.isArray(availabilitySlots)) {
       cleanedSlots = availabilitySlots.filter(
@@ -413,7 +394,7 @@ export const updateUserProfile = async (req, res) => {
       name: name.trim(),
       phoneNumber: phoneNumber || null,
       profilePic: profilePic || null,
-      email:email||null
+      email: email || null,
     };
 
     if (role === 'lawyer') {
@@ -424,7 +405,7 @@ export const updateUserProfile = async (req, res) => {
       updateData.expertise = expertise || null;
       updateData.availabilitySlots = cleanedSlots;
     }
-    console.log("hiii hello")
+    console.log("hiii hello");
 
     let updatedUser;
     if (role === 'client') {
@@ -507,46 +488,46 @@ export const getLawyersdet = async (req, res) => {
   }
 };
 
-
 export const getDashboardData = async (req, res) => {
   try {
     const userId = req.id;
-    let user = await Client.findById(userId);
-    let role = 'client';
-    let consultations = [];
+    console.log(`[GetDashboard] Fetching data for user: ${userId}`);
 
-    if (!user) {
-      user = await Lawyer.findById(userId);
-      role = 'lawyer';
-    }
-
+    const user = await Client.findById(userId) || await Lawyer.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (role === 'client') {
+    let consultations;
+    if (user.role === 'client') {
       consultations = await Consultation.find({ clientId: userId })
         .populate('lawyerId', 'name email profilePic')
-        .sort({ dateTime: 1 });
-    } else {
+        .sort({ dateTime: -1 });
+    } else if (user.role === 'lawyer') {
       consultations = await Consultation.find({ lawyerId: userId })
         .populate('clientId', 'name email profilePic')
-        .sort({ dateTime: 1 });
+        .sort({ dateTime: -1 });
+    }
+
+    // Fetch cases for each consultation
+    for (let consultation of consultations) {
+      const cases = await Case.find({ consultationId: consultation._id }).select('status title');
+      consultation._doc.cases = cases; // Add cases to consultation object
     }
 
     res.json({
       user: {
-        id: user._id,
+        _id: user._id,
         name: user.name,
         email: user.email,
-        role,
+        role: user.role,
         profilePic: user.profilePic,
       },
       consultations,
     });
   } catch (error) {
-    console.error('Error fetching dashboard data:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error(`[GetDashboard] Error: ${error.message}`);
+    res.status(500).json({ message: 'Server error fetching dashboard data' });
   }
 };
 
@@ -658,56 +639,15 @@ export const cancelConsultation = async (req, res) => {
   }
 };
 
+// Upload document
 export const uploadDocument = async (req, res) => {
-  upload(req, res, async (err) => {
-    if (err) {
-      console.error('Multer error:', err.response?.data?.message || err.message)
-      return res.status(400).json({ message: err.message });
-    }
-
-    try {
-      const { consultationId, lawyerId } = req.body;
-      const clientId = req.user.id;
-
-      const consultation = await findOne(ConsultationById(consultationId));
-
-      if (!consultation) {
-        return res.status(404).json({ message: 'Consultation not found' });
-      }
-
-      if (consultation.clientId.toString() !== clientId.clientId) {
-        return res.status(403).json({ message: 'Unauthorized' });
-      }
-
-      if (!consultation.accept) {
-        return res.status(400).json({ message: 'Documents can only be uploaded for accepted consultations' });
-      }
-
-      if (consultation.lawyerId.toString() !== lawyerId) {
-        return res.status(400).json({ message: 'Invalid lawyer ID for this consultation' });
-      }
-
-      const document = new Document({
-        ownerId: clientId,
-        lawyerId: lawyerId,
-        filename: req.file.filename,
-        filepath: `/uploads/${req.file.filename}`,
-      });
-
-      await document.save();
-
-      res.status(201).json(document);
-    } catch (error) {
-      console.error('Error uploading document:', error.response?.data || error.message);
-      res.status(500).json({ message: 'Server error' });
-    }
-  });
-};
-
-export const getDocumentsByConsultation = async (req, res) => {
   try {
-    const consultationId = req.params.id;
-    const userId = req.user.id;
+    const { consultationId, lawyerId } = req.body;
+    const clientId = req.id;
+
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded' });
+    }
 
     const consultation = await Consultation.findById(consultationId);
 
@@ -715,7 +655,49 @@ export const getDocumentsByConsultation = async (req, res) => {
       return res.status(404).json({ message: 'Consultation not found' });
     }
 
-    // Allow access if user is client or lawyer
+    if (consultation.clientId.toString() !== clientId) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    if (!consultation.accept) {
+      return res.status(400).json({ message: 'Documents can only be uploaded for accepted consultations' });
+    }
+
+    if (consultation.lawyerId.toString() !== lawyerId) {
+      return res.status(400).json({ message: 'Invalid lawyer ID for this consultation' });
+    }
+
+    const document = new Document({
+      ownerId: clientId,
+      lawyerId: lawyerId,
+      filename: req.file.filename,
+      filepath: `/images/${req.file.filename}`,
+      consultationId: consultationId,
+    });
+
+    await document.save();
+
+    res.status(201).json(document);
+  } catch (error) {
+    console.error('Error uploading document:', error.message);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// Get documents by consultation
+export const getDocumentsByConsultation = async (req, res) => {
+  try {
+    const { id: consultationId } = req.params;
+    const { caseId } = req.query; // Optional caseId filter
+    const userId = req.id;
+    console.log("hei bb",consultationId)
+    console.log("hei bb",caseId)
+    console.log("hei bb",userId)
+
+    const consultation = await Consultation.findById(consultationId);
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
     if (
       consultation.clientId.toString() !== userId &&
       consultation.lawyerId.toString() !== userId
@@ -723,14 +705,255 @@ export const getDocumentsByConsultation = async (req, res) => {
       return res.status(403).json({ message: 'Unauthorized' });
     }
 
-    const documents = await Document.find({
+    const query = {
       ownerId: consultation.clientId,
       lawyerId: consultation.lawyerId,
-    }).sort({ uploadedAt: -1 });
+      consultationId,
+    };
+    if (caseId) {
+      query.caseId = caseId;
+    }
 
+    const documents = await Document.find(query).sort({ uploadedAt: -1 });
+    console.log(documents)
     res.json(documents);
   } catch (error) {
     console.error('Error fetching documents:', error);
     res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const fixDocumentPaths = async (req, res) => {
+  try {
+    const documents = await Document.find();
+    let updatedCount = 0;
+    for (const doc of documents) {
+      let newPath = doc.filepath;
+      if (newPath.startsWith('/uploads/')) {
+        newPath = newPath.replace('/uploads/', '/images/');
+      } else if (newPath.startsWith('/upload/')) {
+        newPath = newPath.replace('/upload/', '/images/');
+      }
+      if (newPath !== doc.filepath) {
+        doc.filepath = newPath;
+        await doc.save();
+        updatedCount++;
+        console.log(`Updated document ${doc._id}: ${doc.filepath}`);
+      }
+    }
+    console.log(`Document paths updated successfully: ${updatedCount} documents modified`);
+    res.status(200).json({ message: `Document paths updated: ${updatedCount} documents modified` });
+  } catch (error) {
+    console.error('Error updating document paths:', error);
+    res.status(500).json({ message: 'Server error updating document paths' });
+  }
+};
+
+// Download document
+export const downloadDocument = async (req, res) => {
+  try {
+    const { filepath } = req.params;
+    const userId = req.id;
+    console.log(` Requested file: ${filepath}`);
+    console.log(` User ID: ${userId}`);
+    const expectedFilepath = `/images/${filepath}`.replace(/\\/g, '/').trim();
+    console.log(` Querying database for filepath: ${expectedFilepath}`);
+    let document = await Document.findOne({ filepath: expectedFilepath });
+    if (!document) {
+      console.log(` Exact match not found, trying case-insensitive search`);
+      document = await Document.findOne({
+        filepath: { $regex: `^${expectedFilepath}$`, $options: 'i' }
+      });
+    }
+
+    if (!document) {
+      console.error(` Document not found for filepath: ${expectedFilepath}`);
+      console.log(` Listing all document filepaths in database:`);
+      const allDocs = await Document.find({}, 'filepath');
+      console.log(allDocs.map(doc => doc.filepath));
+      return res.status(404).json({ message: 'Document not found in database' });
+    }
+    console.log(` Found document: ${document._id}`);
+
+    if (
+      document.ownerId.toString() !== userId &&
+      document.lawyerId.toString() !== userId
+    ) {
+      console.error(` Unauthorized access by user: ${userId}`);
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+    console.log("hi hello");
+
+    const sanitizedFilename = path.basename(filepath);
+    const absolutePath = path.join(__dirname, '..', 'images', sanitizedFilename);
+    console.log(`Resolved file path: ${absolutePath}`);
+    if (!fs.existsSync(absolutePath)) {
+      console.error(`File not found on server: ${absolutePath}`);
+      console.log(`Listing files in images/ directory:`);
+      try {
+        fs.readdirSync(path.join(__dirname, '..', 'images')).forEach(file => console.log(file));
+      } catch (err) {
+        console.error(`Error reading images directory: ${err.message}`);
+      }
+      return res.status(404).json({ message: 'File not found on server' });
+    }
+    try {
+      fs.accessSync(absolutePath, fs.constants.R_OK);
+      console.log(`File is readable`);
+    } catch (err) {
+      console.error(`File permission error: ${err.message}`);
+      return res.status(500).json({ message: 'File access error' });
+    }
+    const mimeType = mime.lookup(absolutePath) || 'application/octet-stream';
+    res.setHeader('Content-Disposition', `attachment; filename=${document.filename}`);
+    res.setHeader('Content-Type', mimeType);
+    console.log(`Serving file with MIME type: ${mimeType}`);
+    fs.createReadStream(absolutePath).pipe(res);
+  } catch (error) {
+    console.error(`Error: ${error.message}`);
+    console.error(`Stack trace: ${error.stack}`);
+    res.status(500).json({ message: 'Server error downloading document', error: error.message });
+  }
+};
+
+export const createCase = async (req, res) => {
+  try {
+    const { title, type, description, consultationId, lawyerId } = req.body;
+    const clientId = req.id;
+    const file = req.file;
+
+    console.log(`[CreateCase] Request:`, { title, type, description, consultationId, lawyerId, clientId, hasFile: !!file });
+
+    if (!title || !type || !description || !consultationId || !lawyerId) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+
+    const consultation = await Consultation.findById(consultationId);
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    if (consultation.clientId.toString() !== clientId) {
+      return res.status(403).json({ message: 'Unauthorized: You are not the client for this consultation' });
+    }
+    if (consultation.lawyerId.toString() !== lawyerId) {
+      return res.status(400).json({ message: 'Invalid lawyer ID for this consultation' });
+    }
+    if (!consultation.accept) {
+      return res.status(400).json({ message: 'Case can only be registered for accepted consultations' });
+    }
+
+    const caseData = {
+      clientId,
+      lawyerId,
+      consultationId,
+      title: title.trim(),
+      type: type.trim(),
+      description: description.trim(),
+      status: 'pending',
+    };
+
+    if (file) {
+      const filePath = `/images/${file.filename}`;
+      caseData.updates = [
+        {
+          message: `Initial case document uploaded: ${file.filename}`,
+          timestamp: new Date(),
+        },
+      ];
+      const document = new Document({
+        ownerId: clientId,
+        lawyerId,
+        filename: file.filename,
+        filepath: filePath,
+        consultationId,
+        caseId: null,
+      });
+      await document.save();
+      caseData.documents = [document._id];
+    }
+
+    const newCase = new Case(caseData);
+    await newCase.save();
+
+    if (file) {
+      await Document.updateOne({ _id: caseData.documents[0] }, { caseId: newCase._id });
+    }
+
+    console.log(`[CreateCase] Case created: ${newCase._id}`);
+
+    res.status(201).json({
+      message: 'Case registered successfully',
+      case: {
+        _id: newCase._id,
+        clientId: newCase.clientId,
+        lawyerId: newCase.lawyerId,
+        consultationId: newCase.consultationId,
+        title: newCase.title,
+        type: newCase.type,
+        description: newCase.description,
+        status: newCase.status,
+        updates: newCase.updates,
+        createdAt: newCase.createdAt,
+      },
+    });
+  } catch (error) {
+    console.error(`[CreateCase] Error: ${error.message}`);
+    console.error(`[CreateCase] Stack trace: ${error.stack}`);
+    res.status(500).json({ message: 'Server error creating case', error: error.message });
+  }
+};
+
+export const getCasesByConsultation = async (req, res) => {
+  try {
+    const { id: consultationId } = req.params;
+    const userId = req.id;
+
+    console.log(`[GetCases] Consultation ID: ${consultationId}, User ID: ${userId}`);
+
+    const consultation = await Consultation.findById(consultationId);
+    if (!consultation) {
+      return res.status(404).json({ message: 'Consultation not found' });
+    }
+
+    if (
+      consultation.clientId.toString() !== userId &&
+      consultation.lawyerId.toString() !== userId
+    ) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    const cases = await Case.find({ consultationId }).sort({ createdAt: -1 });
+
+    res.json(cases);
+  } catch (error) {
+    console.error(`[GetCases] Error: ${error.message}`);
+    res.status(500).json({ message: 'Server error fetching cases' });
+  }
+};
+
+export const getCaseById = async (req, res) => {
+  try {
+    const { caseId } = req.params;
+    const userId = req.id;
+
+    console.log(`[GetCaseById] Case ID: ${caseId}, User ID: ${userId}`);
+
+    const caseData = await Case.findById(caseId);
+    if (!caseData) {
+      return res.status(404).json({ message: 'Case not found' });
+    }
+
+    if (
+      caseData.lawyerId.toString() !== userId &&
+      caseData.clientId.toString() !== userId
+    ) {
+      return res.status(403).json({ message: 'Unauthorized' });
+    }
+
+    res.json(caseData);
+  } catch (error) {
+    console.error(`[GetCaseById] Error: ${error.message}`);
+    res.status(500).json({ message: 'Server error fetching case details' });
   }
 };

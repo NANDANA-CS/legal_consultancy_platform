@@ -104,7 +104,7 @@ const Navbar = () => {
         <div className="flex justify-between items-center h-44">
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/images/logo.png" alt="LegaLead Logo" className="h-62 w-auto" />
+              <img src="/images/logo.png" alt="LegaLead Logo" className="h-52 w-auto" />
             </Link>
           </div>
 
@@ -158,7 +158,7 @@ const Navbar = () => {
                   >   Appoinments            
                 </Link>
                 <Link
-                  to="/cases"
+                  to="/casedetails"
                   className="hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium border border-white"
                 >
                   Cases
@@ -175,7 +175,7 @@ const Navbar = () => {
                   <img
                     src={profilePic}
                     alt="Profile"
-                    className="h-10 w-10 rounded-full object-cover"
+                    className="h-12 w-15 rounded-full object-cover"
                   />
                 </button>
                 {isDropdownOpen && (
@@ -254,7 +254,7 @@ const Navbar = () => {
                 onClick={toggleMobileMenu}
               >
                 Find Lawyers
-              </Link>
+              </Link>     
             )}
             {isLoggedIn && currentUser?.role === 'lawyer' && (
               <>
@@ -265,7 +265,7 @@ const Navbar = () => {
                   Chat with Clients
                 </button>
                 <Link
-                  to="/cases"
+                  to="/casedetails"
                   className="block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium"
                   onClick={toggleMobileMenu}
                 >
@@ -289,7 +289,7 @@ const Navbar = () => {
                 {isDropdownOpen && (
                   <div className="bg-cyan-900 rounded-md shadow-lg py-1 mt-1">
                     <Link
-                      to="/dashboard"
+                     to={currentUser?.role === 'lawyer' ? '/lawyerdashboard' : '/clientdashboard'}
                       className="block px-4 py-2 text-base font-medium text-white hover:bg-gray-700"
                       onClick={() => {
                         setIsDropdownOpen(false);

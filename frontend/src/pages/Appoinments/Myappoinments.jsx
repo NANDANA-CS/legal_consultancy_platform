@@ -39,7 +39,7 @@ const MyAppointments = () => {
         console.log('Dashboard data:', response.data);
         setDashboardData(response.data);
         setLoading(false);
-        toast.success('Successfully fetched dashboard data', { theme: 'dark' });
+        // toast.success('Successfully fetched dashboard data', { theme: 'dark' });
       } catch (error) {
         console.error('Error fetching dashboard data:', error.response?.data || error.message);
         toast.error(error.response?.data?.message || 'Failed to fetch dashboard data', { theme: 'dark' });
@@ -68,7 +68,6 @@ const MyAppointments = () => {
         { headers: { Authorization: `Bearer ${token}` } }
       );
 
-      // Remove consultation from state
       setDashboardData((prev) => ({
         ...prev,
         consultations: prev.consultations.filter((c) => c._id !== consultationId),
@@ -104,7 +103,7 @@ const MyAppointments = () => {
     <>
       <ToastContainer />
       <Navbar />
-      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-100 tracking-tight">My Appointments</h1>
         <div className="max-w-4xl mx-auto bg-gradient-to-br from-gray-800 to-gray-850 p-10 rounded-2xl shadow-2xl min-h-[600px] transition-transform duration-300 hover:scale-[1.01]">
           <h2 className="text-3xl font-semibold text-gray-100 mb-6">Welcome, {user.name}</h2>
