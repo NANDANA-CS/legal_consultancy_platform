@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import axios from 'axios'
 import bcrypt from 'bcrypt';
 import Client from '../models/client.model.js';
 import Lawyer from '../models/lawyer.model.js';
@@ -201,7 +202,6 @@ export const clientLogin = async (req, res) => {
 
 // Auth0 Signup
 export const authSignup = async (req, res) => {
-  console.log('\n=== AUTH0 SIGNUP REQUEST START ===');
   console.log('Timestamp:', new Date().toISOString());
   console.log('Request headers:', JSON.stringify(req.headers, null, 2));
   console.log('Request body:', JSON.stringify(req.body, null, 2));
@@ -285,7 +285,7 @@ export const authSignup = async (req, res) => {
       { expiresIn: '24h' },
     );
 
-    console.log('=== AUTH0 SIGNUP SUCCESS ===');
+    console.log(' AUTH0 SIGNUP SUCCESS ');
     res.status(201).json({
       token,
       message: 'Auth0 signup successful',
@@ -309,7 +309,7 @@ export const authSignup = async (req, res) => {
 export const getUserData = async (req, res) => {
   try {
     console.log(req.id);
-    const id = req.params.id || req.id; // Use params.id for CaseDetails, req.id for auth
+    const id = req.params.id || req.id; 
     const user = await Client.findById(id) || await Lawyer.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -508,11 +508,9 @@ export const getDashboardData = async (req, res) => {
         .populate('clientId', 'name email profilePic')
         .sort({ dateTime: -1 });
     }
-
-    // Fetch cases for each consultation
     for (let consultation of consultations) {
       const cases = await Case.find({ consultationId: consultation._id }).select('status title');
-      consultation._doc.cases = cases; // Add cases to consultation object
+      consultation._doc.cases = cases; 
     }
 
     res.json({
@@ -530,39 +528,23 @@ export const getDashboardData = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching dashboard data' });
   }
 };
-
-export const createConsultation = async (req, res) => {
+ export const createConsultation = async (req, res) => {
   try {
-    const { clientId, lawyerId, dateTime, notes, meetLink } = req.body;
-
-    if (!clientId || !lawyerId || !dateTime || !meetLink) {
-      return res.status(400).json({ message: 'Missing required fields' });
-    }
-
-    if (req.id !== clientId) {
-      return res.status(403).json({ message: 'Unauthorized client ID' });
-    }
-
-    const consultation = new Consultation({
+    const { clientId, dateTime, notes } = req.body;
+    const clientName = clientId.name || 'Unknown Client'; 
+    const meetLink = await createZoomMeeting({ clientName, dateTime });
+    const consultation = await Consultation.create({
       clientId,
-      lawyerId,
-      dateTime: new Date(dateTime),
-      notes: notes || '',
+      dateTime,
+      notes,
       meetLink,
-      status: 'scheduled',
+      status: 'Scheduled',
       accept: false,
     });
 
-    await consultation.save();
-
-    const populatedConsultation = await Consultation.findById(consultation._id)
-      .populate('clientId', 'name email profilePic')
-      .populate('lawyerId', 'name email profilePic');
-
-    res.status(201).json(populatedConsultation);
+    res.status(201).json(consultation);
   } catch (error) {
-    console.error('Error creating consultation:', error);
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: 'Failed to create consultation', error: error.message });
   }
 };
 
@@ -684,11 +666,10 @@ export const uploadDocument = async (req, res) => {
   }
 };
 
-// Get documents by consultation
 export const getDocumentsByConsultation = async (req, res) => {
   try {
     const { id: consultationId } = req.params;
-    const { caseId } = req.query; // Optional caseId filter
+    const { caseId } = req.query; 
     const userId = req.id;
     console.log("hei bb",consultationId)
     console.log("hei bb",caseId)
@@ -902,14 +883,14 @@ export const createCase = async (req, res) => {
     console.error(`[CreateCase] Stack trace: ${error.stack}`);
     res.status(500).json({ message: 'Server error creating case', error: error.message });
   }
-};
+}
 
 export const getCasesByConsultation = async (req, res) => {
   try {
     const { id: consultationId } = req.params;
     const userId = req.id;
 
-    console.log(`[GetCases] Consultation ID: ${consultationId}, User ID: ${userId}`);
+    console.log(`Consultation ID: ${consultationId}, User ID: ${userId}`);
 
     const consultation = await Consultation.findById(consultationId);
     if (!consultation) {
@@ -957,3 +938,58 @@ export const getCaseById = async (req, res) => {
     res.status(500).json({ message: 'Server error fetching case details' });
   }
 };
+
+
+
+export const createZoomMeeting = async (consultationDetails) => {
+  try {
+    const accessToken = await getZoomAccessToken();
+    const response = await axios.post(
+      'https://api.zoom.us/v2/users/me/meetings',
+      {
+        topic: `Consultation with ${consultationDetails.clientName || 'Client'}`,
+        type: 2,
+        start_time: consultationDetails.dateTime,
+        duration: 60, 
+        settings: {
+          host_video: true,
+          participant_video: true,
+          join_before_host: false,
+          mute_upon_entry: true,
+          waiting_room: true,
+        },
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    return response.data.join_url;
+  } catch (error) {
+    console.error('Error creating Zoom meeting:', error.response?.data || error.message);
+    throw new Error('Failed to create Zoom meeting');
+  }
+};
+
+
+export const getZoomAccessToken = async () => {
+  try {
+    const response = await axios.post('https://zoom.us/oauth/token', null, {
+      params: {
+        grant_type: 'account_credentials',
+        account_id: ZOOM_ACCOUNT_ID,
+      },
+      headers: {
+        Authorization: `Basic ${Buffer.from(`${ZOOM_CLIENT_ID}:${ZOOM_CLIENT_SECRET}`).toString('base64')}`,
+      },
+    });
+    return response.data.access_token;
+  } catch (error) {
+    console.error('Error getting Zoom access token:', error.response?.data || error.message);
+    throw new Error('Failed to authenticate with Zoom');
+  }
+};
+
+

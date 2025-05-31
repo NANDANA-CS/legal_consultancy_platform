@@ -64,7 +64,7 @@ const Editprofile = () => {
                     availabilitySlots: userData.availabilitySlots?.length > 0
                         ? userData.availabilitySlots
                         : [{ day: '', startTime: '', endTime: '' }],
-                    profilePic: userData.profilePic, 
+                    profilePic: userData.profilePic,
                 });
                 setLoading(false);
             } catch (err) {
@@ -132,7 +132,7 @@ const Editprofile = () => {
                 return;
             }
 
-        
+
             if (!formData.name) {
                 toast.error('Name is required', { theme: 'dark' });
                 setSubmitting(false);
@@ -163,7 +163,7 @@ const Editprofile = () => {
                 }
             }
 
-     
+
             const cleanedSlots = formData.availabilitySlots.filter(
                 (slot) => slot.day && slot.startTime && slot.endTime
             );

@@ -88,10 +88,9 @@ const Profile = () => {
                   : '/images/default-profile.png'
               }
               alt="Profile"
-              className="h-96 w-96 rounded-lg object-cover border-4 border-gray-600 shadow-lg transition-transform duration-300 hover:scale-105"
+              className="h-126 w-96 rounded-lg object-cover border-4 border-gray-600 shadow-lg transition-transform duration-300 "
             />
           </div>
-          {/* Details Section */}
           <div className="flex-1 space-y-8">
             <h2 className="text-3xl font-semibold text-white tracking-wide border-b border-gray-700 pb-2">{userData.name}</h2>
             <div className="space-y-4 text-lg">
@@ -125,10 +124,10 @@ const Profile = () => {
                     <span className="font-medium text-gray-100">Current Workplace:</span>
                     {userData.currentWorkplace || 'N/A'}
                   </p>
-                  <p className="text-gray-200 flex items-center gap-2">
+                  {/* <p className="text-gray-200 flex items-center gap-2">
                     <span className="font-medium text-gray-100">Expertise:</span>
                     {userData.expertise || 'Not specified'}
-                  </p>
+                  </p> */}
                 </>
               )}
               {userData.role === 'lawyer' && userData.availabilitySlots?.length > 0 && (
@@ -151,14 +150,14 @@ const Profile = () => {
               >
                 Edit Profile
               </button>
-              {userData.role === 'lawyer' && (
+              {/* {userData.role === 'lawyer' && (
                 <button
                   onClick={() => toast.info('View bookings coming soon!', { theme: 'dark' })}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3.5 rounded-lg font-semibold text-lg transition-colors duration-300 shadow-lg hover:shadow-xl"
                 >
                   View Bookings
                 </button>
-              )}
+              )} */}
             </div>
           </div>
         </div>

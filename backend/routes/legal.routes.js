@@ -24,6 +24,8 @@ import {
   createCase,
   getCasesByConsultation,
   getCaseById,
+  createZoomMeeting,
+  getZoomAccessToken,
 } from '../controllers/legal.controller.js';
 
 const legal_router = express.Router();
@@ -51,5 +53,7 @@ legal_router.get('/dashboard', auth, getDashboardData);
 legal_router.post('/cases', auth, upload, createCase);
 legal_router.get('/cases/consultation/:id', auth, getCasesByConsultation);
 legal_router.get('/cases/:caseId', auth, getCaseById);
+legal_router.post('/zoom',createZoomMeeting)
+legal_router.post('/getzoom',getZoomAccessToken)
 
 export default legal_router;

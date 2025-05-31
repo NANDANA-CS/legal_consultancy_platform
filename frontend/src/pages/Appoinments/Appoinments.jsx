@@ -39,7 +39,7 @@ const Appointments = () => {
         console.log('Dashboard data:', response.data);
         setDashboardData(response.data);
         setLoading(false);
-        toast.success('Successfully fetched dashboard data', { theme: 'dark' });
+        // toast.success('Successfully fetched dashboard data', { theme: 'dark' });
       } catch (error) {
         console.error('Error fetching dashboard data:', error.response?.data || error.message);
         toast.error(error.response?.data?.message || 'Failed to fetch dashboard data', { theme: 'dark' });
@@ -67,8 +67,6 @@ const Appointments = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Remove consultation from state
       setDashboardData((prev) => ({
         ...prev,
         consultations: prev.consultations.filter((c) => c._id !== consultationId),
@@ -97,8 +95,6 @@ const Appointments = () => {
         {},
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      // Remove consultation from state
       setDashboardData((prev) => ({
         ...prev,
         consultations: prev.consultations.filter((c) => c._id !== consultationId),
@@ -134,7 +130,7 @@ const Appointments = () => {
     <>
       <ToastContainer />
       <Navbar />
-      <div class="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div class="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30">
         <h1 class="text-4xl font-bold text-center mb-12 text-gray-100 tracking-tight">
           Pending Appointments
         </h1>
@@ -148,12 +144,12 @@ const Appointments = () => {
               >
                 View Profile
               </button>
-              <button
+              {/* <button
                 onClick={() => navigate('/cases')}
                 class="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300"
               >
                 View Cases
-              </button>
+              </button> */}
             </div>
             <div>
               <h3 class="text-xl font-semibold text-gray-200 mb-4">Pending Consultations</h3>

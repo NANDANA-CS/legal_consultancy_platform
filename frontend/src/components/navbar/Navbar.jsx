@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth0 } from '@auth0/auth0-react';
@@ -108,7 +107,7 @@ const Navbar = () => {
             </Link>
           </div>
 
-          <div className="w-full max-w-2xl mx-4 relative">
+          <div className="w-full max-w-3xl mx-4 relative">
             <form onSubmit={handleSearch}>
               <input
                 type="search"
@@ -146,23 +145,23 @@ const Navbar = () => {
             
             {isLoggedIn && currentUser?.role === 'lawyer' && (
               <>
-                <button
+                {/* <button
                   onClick={handleChatClick}
                   className="hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium border border-white"
                 >
                   Chat with Clients
-                </button>
+                </button> */}
                  <Link 
                   to='/appoinments'
                    className="hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium border border-white"
                   >   Appoinments            
                 </Link>
-                <Link
+                {/* <Link
                   to="/casedetails"
                   className="hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium border border-white"
                 >
                   Cases
-                </Link>
+                </Link> */}
                
               </>
             )}
@@ -264,13 +263,13 @@ const Navbar = () => {
                 >
                   Chat with Clients
                 </button>
-                <Link
+                {/* <Link
                   to="/casedetails"
                   className="block hover:bg-gray-700 px-3 py-2 rounded-md text-base font-medium"
                   onClick={toggleMobileMenu}
                 >
                   Cases
-                </Link>
+                </Link> */}
               </>
             )}
             {isLoggedIn ? (

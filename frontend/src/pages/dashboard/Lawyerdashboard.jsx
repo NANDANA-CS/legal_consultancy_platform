@@ -49,6 +49,13 @@ const LawyerDashboard = () => {
     fetchDashboardData();
   }, [isAuthenticated, getAccessTokenSilently, navigate]);
 
+  const isMeetingActive = (dateTime) => {
+    const now = new Date();
+    const meetingTime = new Date(dateTime);
+    const timeDiff = meetingTime - now;
+    return timeDiff <= 30 * 60 * 1000 && timeDiff >= -30 * 60 * 1000;
+  };
+
   if (loading) {
     return (
       <div className="bg-gray-900 text-white min-h-screen flex items-center justify-center">
@@ -56,7 +63,6 @@ const LawyerDashboard = () => {
       </div>
     );
   }
-
   if (!dashboardData || dashboardData.user.role !== 'lawyer') {
     console.log('Access denied:', { dashboardData, role: dashboardData?.user?.role });
     return (
@@ -65,14 +71,12 @@ const LawyerDashboard = () => {
       </div>
     );
   }
-
   const { user, consultations } = dashboardData;
-
   return (
     <>
       <ToastContainer />
       <Navbar />
-      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-100 tracking-tight">
           Lawyer Dashboard
         </h1>
@@ -87,20 +91,14 @@ const LawyerDashboard = () => {
                 View Profile
               </button>
               <button
-                onClick={() => navigate('/cases')}
-                className="w-full bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300"
-              >
-                View Cases
-              </button>
-              <button
-                onClick={() => navigate('/appointments')}
+                onClick={() => navigate('/appoinments')}
                 className="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300"
               >
                 Pending Appointments
               </button>
             </div>
             <div>
-              <h3 className="text-xl font-semibold text-gray-200 mb-4">Your Consultations</h3>
+              <h3 className="text-3xl font-semibold text-gray-200 mb-4">Your Consultations</h3>
               {consultations && consultations.length > 0 ? (
                 <ul className="space-y-4">
                   {consultations.map((consultation) => (
@@ -117,34 +115,42 @@ const LawyerDashboard = () => {
                             className="h-12 w-12 rounded-full object-cover"
                           />
                           <div>
-                            <p className="text-lg font-medium text-gray-100">
+                            <p className="text-2xl font-medium text-gray-100">
                               {consultation.clientId?.name || 'Unknown Client'} -{' '}
                               {new Date(consultation.dateTime).toLocaleString()}
                             </p>
-                            <p className="text-gray-400">Status: {consultation.status}</p>
-                            <p className="text-gray-400">
+                            <p className="text-gray-400 text-lg">Status: {consultation.status}</p>
+                            <p className="text-gray-400 text-lg">
                               Acceptance: {consultation.accept ? 'Accepted' : 'Pending'}
                             </p>
                             {consultation.notes && (
-                              <p className="text-gray-500 text-sm">{consultation.notes}</p>
+                              <p className="text-gray-500 text-md">{consultation.notes}</p>
                             )}
-                            <p className="text-gray-400">
-                              <a
-                                href={consultation.meetLink}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="underline hover:text-blue-400"
-                              >
-                                Meeting Link
-                              </a>
-                            </p>
+                            <button
+                              onClick={() => {
+                                if (consultation.meetLink) {
+                                  window.open(consultation.meetLink, '_blank', 'noopener,noreferrer');
+                                } else {
+                                  toast.error('No Zoom meeting link available', { theme: 'dark' });
+                                }
+                              }}
+                              className="mt-2 bg-teal-600 hover:bg-teal-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 text-md"
+                              disabled={!consultation.meetLink || !isMeetingActive(consultation.dateTime)}
+                            >
+                              Join Zoom Meeting
+                            </button>
+                            {!isMeetingActive(consultation.dateTime) && consultation.meetLink && (
+                              <p className="text-gray-500 text-sm mt-1">
+                                Meeting link active 30 minutes before and after scheduled time
+                              </p>
+                            )}
                           </div>
                         </div>
                         {consultation.accept && consultation.cases?.length > 0 && (
                           <div className="space-y-2">
                             <button
                               onClick={() => navigate(`/casedetails/${consultation.cases[0]._id}`)}
-                              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 text-sm"
+                              className="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg font-semibold transition-colors duration-300 text-md"
                             >
                               View Case
                             </button>
@@ -155,7 +161,7 @@ const LawyerDashboard = () => {
                   ))}
                 </ul>
               ) : (
-                <p className="text-gray-400 text-center">No consultations scheduled.</p>
+                <p className="text-gray-400 text-center">No consultations scheduled</p>
               )}
             </div>
           </div>

@@ -22,7 +22,7 @@ export const upload = multer({
       cb(new Error('Only JPEG, PNG, JPG, and PDF files are allowed'));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 },
 }).single('file');
 
 export const uploadFields = multer({
@@ -35,5 +35,5 @@ export const uploadFields = multer({
       cb(new Error('Only PDF, JPEG, JPG, or PNG files are allowed'));
     }
   },
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+  limits: { fileSize: 5 * 1024 * 1024 }, 
 }).fields([{ name: 'profilePic', maxCount: 1 }]);

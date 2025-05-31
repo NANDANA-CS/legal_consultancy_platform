@@ -40,23 +40,18 @@ const CaseDetails = () => {
 
         setToken(authToken);
 
-        // Fetch case details
         console.log('Fetching case with ID:', caseId);
         const caseResponse = await axios.get(`http://localhost:3000/api/cases/${caseId}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         console.log('Case data:', caseResponse.data);
         setCaseData(caseResponse.data);
-
-        // Fetch client details
         console.log('Fetching client with ID:', caseResponse.data.clientId);
         const clientResponse = await axios.get(`http://localhost:3000/api/user/${caseResponse.data.clientId}`, {
           headers: { Authorization: `Bearer ${authToken}` },
         });
         console.log('Client data:', clientResponse.data);
         setClientData(clientResponse.data);
-
-        // Fetch document details
         console.log('Fetching documents for case ID:', caseId);
         const docsResponse = await axios.get(`http://localhost:3000/api/documents/consultation/${caseResponse.data.consultationId}?caseId=${caseId}`, {
           headers: { Authorization: `Bearer ${authToken}` },
@@ -179,7 +174,7 @@ const CaseDetails = () => {
     <>
       <ToastContainer />
       <Navbar />
-      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8">
+      <div className="bg-gray-900 text-white min-h-screen pt-24 px-4 sm:px-6 lg:px-8 mt-30">
         <h1 className="text-4xl font-bold text-center mb-12 text-gray-100 tracking-tight">
           Case Details
         </h1>
@@ -257,7 +252,7 @@ const CaseDetails = () => {
                 </div>
               </div>
             </div>
-            {/* Client Details */}
+      
             <div className="space-y-8">
               <h2 className="text-3xl font-semibold text-gray-100">Client Information</h2>
               <div className="bg-gray-700 p-8 rounded-xl shadow-lg flex items-center space-x-6">
@@ -288,7 +283,7 @@ const CaseDetails = () => {
           </div>
           <div className="mt-10 text-center">
             <button
-              onClick={() => navigate('/lawyer-dashboard')}
+              onClick={() => navigate('/lawyerdashboard')}
               className="bg-blue-600 hover:bg-blue-700 text-white py-3 px-8 rounded-lg font-semibold transition-colors duration-300 shadow-md"
             >
               Back to Dashboard

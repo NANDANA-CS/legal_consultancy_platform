@@ -110,12 +110,12 @@ const Home = () => {
                 <li><strong>Employment Law:</strong> Workplace rights, disputes, and contracts handled.</li>
               </ul>
               <div className="flex flex-col sm:flex-row justify-center gap-4">
-                <button
+                {/* <button
                   onClick={handleChatClick}
                   className="bg-blue-600 hover:bg-blue-700 px-6 py-3 rounded-md text-lg font-medium transition"
                 >
                   Chat with Lawyers
-                </button>
+                </button> */}
               </div>
             </div>
           </div>

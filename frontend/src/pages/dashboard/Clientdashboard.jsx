@@ -43,7 +43,7 @@ const ClientDashboard = () => {
         setLoading(false);
 
         if (response.data.consultations) {
-          // Fetch documents
+      
           const docsPromises = response.data.consultations.map((consultation) =>
             axios.get(`http://localhost:3000/api/documents/consultation/${consultation._id}`, {
               headers: { Authorization: `Bearer ${token}` },
@@ -55,8 +55,6 @@ const ClientDashboard = () => {
             docsMap[response.data.consultations[index]._id] = res.data;
           });
           setDocuments(docsMap);
-
-          // Fetch cases
           const casesPromises = response.data.consultations.map((consultation) =>
             axios.get(`http://localhost:3000/api/cases/consultation/${consultation._id}`, {
               headers: { Authorization: `Bearer ${token}` },
