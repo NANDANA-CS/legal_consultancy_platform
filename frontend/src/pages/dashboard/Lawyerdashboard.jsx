@@ -126,7 +126,7 @@ const LawyerDashboard = () => {
                             {consultation.notes && (
                               <p className="text-gray-500 text-md">{consultation.notes}</p>
                             )}
-                            <button
+                            {/* <button
                               onClick={() => {
                                 if (consultation.meetLink) {
                                   window.open(consultation.meetLink, '_blank', 'noopener,noreferrer');
@@ -138,12 +138,12 @@ const LawyerDashboard = () => {
                               disabled={!consultation.meetLink || !isMeetingActive(consultation.dateTime)}
                             >
                               Join Zoom Meeting
-                            </button>
-                            {!isMeetingActive(consultation.dateTime) && consultation.meetLink && (
+                            </button> */}
+                            {/* {!isMeetingActive(consultation.dateTime) && consultation.meetLink && (
                               <p className="text-gray-500 text-sm mt-1">
                                 Meeting link active 30 minutes before and after scheduled time
                               </p>
-                            )}
+                            )} */}
                           </div>
                         </div>
                         {consultation.accept && consultation.cases?.length > 0 && (

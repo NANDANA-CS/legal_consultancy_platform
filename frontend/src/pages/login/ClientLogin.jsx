@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import LoginButton from './LoginButton';
+// import LoginButton from './LoginButton';
 import { useAuth0 } from "@auth0/auth0-react";
 import axios from 'axios';
 import Navbar from '../../components/navbar/Navbar';
