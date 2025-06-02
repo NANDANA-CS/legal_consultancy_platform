@@ -34,7 +34,7 @@ const LawyerLogin = () => {
 
   return (
     <div className="bg-gray-800/70 backdrop-blur-lg p-8 rounded-2xl shadow-2xl border border-gray-700/50 relative overflow-hidden">
-      <h2 className="text-2xl font-bold mb-6 text-center text-white">Lawyer Login</h2>
+      <h2 className="text-3xl font-bold mb-8 text-center text-white">Lawyer Login</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label htmlFor="email" className="block text-gray-300 mb-1">
@@ -47,6 +47,7 @@ const LawyerLogin = () => {
             value={formData.email}
             onChange={handleInputChange}
             required
+            placeholder='Enter your email'
             className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-600"
           />
         </div>
@@ -61,6 +62,7 @@ const LawyerLogin = () => {
             value={formData.password}
             onChange={handleInputChange}
             required
+            placeholder='Enter password'
             className="w-full p-2 rounded bg-gray-800 text-white border border-gray-700 focus:outline-none focus:border-blue-600"
           />
         </div>

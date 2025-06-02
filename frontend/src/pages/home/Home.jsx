@@ -78,7 +78,7 @@ const Home = () => {
       <div className="bg-gray-800 text-white min-h-screen pt-24 mt-20">
         <div className="w-full h-[300px] sm:h-[400px] md:h-[900px] bg-[url('/images/hoe.jpg')] bg-no-repeat bg-cover relative">
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 px-4 text-center">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
+            <h1 className="text-3xl sm:text-4xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
               Online Legal Consultancy Platform
             </h1>
             <p className="text-sm sm:text-base md:text-lg text-gray-300">

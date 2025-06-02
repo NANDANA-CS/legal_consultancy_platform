@@ -8,7 +8,7 @@ import {
   clientLogin,
   clientSignup,
   getLawyers,
-  authSignup,
+  // authSignup,
   getLawyersdet,
   updateUserProfile,
   uploadProfilePic,
@@ -34,7 +34,7 @@ legal_router.post('/lawyersignup', uploadFields, signup);
 legal_router.post('/login', login);
 legal_router.post('/clientsignup', uploadFields, clientSignup);
 legal_router.post('/clientlogin', clientLogin);
-legal_router.post('/authsignup', authSignup);
+// legal_router.post('/authsignup', authSignup);
 legal_router.get('/user', auth, getUserData);
 legal_router.get('/user/:id', auth, getUserData);
 legal_router.put('/user', auth, updateUserProfile);

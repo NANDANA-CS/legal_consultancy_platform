@@ -201,109 +201,109 @@ export const clientLogin = async (req, res) => {
 };
 
 // Auth0 Signup
-export const authSignup = async (req, res) => {
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Request headers:', JSON.stringify(req.headers, null, 2));
-  console.log('Request body:', JSON.stringify(req.body, null, 2));
-  console.log('Decoded token payload:', JSON.stringify(req.auth0User, null, 2));
+// export const authSignup = async (req, res) => {
+//   console.log('Timestamp:', new Date().toISOString());
+//   console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+//   console.log('Request body:', JSON.stringify(req.body, null, 2));
+//   console.log('Decoded token payload:', JSON.stringify(req.auth0User, null, 2));
 
-  try {
-    const { name, email, picture, auth0Id } = req.body;
-    const tokenPayload = req.auth0User;
+//   try {
+//     const { name, email, picture, auth0Id } = req.body;
+//     const tokenPayload = req.auth0User;
 
-    if (!process.env.JWT_KEY) {
-      console.error('JWT_KEY is not defined');
-      return res.status(500).json({ message: 'Server configuration error' });
-    }
+//     if (!process.env.JWT_KEY) {
+//       console.error('JWT_KEY is not defined');
+//       return res.status(500).json({ message: 'Server configuration error' });
+//     }
 
-    if (!auth0Id || !email || !name) {
-      console.error('Missing required fields:', { auth0Id, email, name });
-      return res.status(400).json({
-        message: 'Missing required fields: auth0Id, email, or name',
-        received: { name, email, picture, auth0Id },
-      });
-    }
+//     if (!auth0Id || !email || !name) {
+//       console.error('Missing required fields:', { auth0Id, email, name });
+//       return res.status(400).json({
+//         message: 'Missing required fields: auth0Id, email, or name',
+//         received: { name, email, picture, auth0Id },
+//       });
+//     }
 
-    if (tokenPayload.sub !== auth0Id || tokenPayload.email !== email) {
-      console.error('Token payload mismatch:', {
-        tokenSub: tokenPayload.sub,
-        bodyAuth0Id: auth0Id,
-        tokenEmail: tokenPayload.email,
-        bodyEmail: email,
-      });
-      return res.status(400).json({ message: 'Token payload does not match request data' });
-    }
+//     if (tokenPayload.sub !== auth0Id || tokenPayload.email !== email) {
+//       console.error('Token payload mismatch:', {
+//         tokenSub: tokenPayload.sub,
+//         bodyAuth0Id: auth0Id,
+//         tokenEmail: tokenPayload.email,
+//         bodyEmail: email,
+//       });
+//       return res.status(400).json({ message: 'Token payload does not match request data' });
+//     }
 
-    let existingClient = await Client.findOne({
-      $or: [{ auth0Id }, { email: email.toLowerCase().trim() }],
-    });
+//     let existingClient = await Client.findOne({
+//       $or: [{ auth0Id }, { email: email.toLowerCase().trim() }],
+//     });
 
-    if (existingClient) {
-      console.log('Existing user found:', existingClient._id);
-      const token = jwt.sign(
-        {
-          id: existingClient._id,
-          name: existingClient.name,
-          email: existingClient.email,
-          role: existingClient.role,
-        },
-        process.env.JWT_KEY,
-        { expiresIn: '24h' },
-      );
-      return res.status(200).json({
-        token,
-        message: 'User already exists, logged in successfully',
-        user: {
-          id: existingClient._id,
-          name: existingClient.name,
-          email: existingClient.email,
-          role: existingClient.role,
-        },
-      });
-    }
+//     if (existingClient) {
+//       console.log('Existing user found:', existingClient._id);
+//       const token = jwt.sign(
+//         {
+//           id: existingClient._id,
+//           name: existingClient.name,
+//           email: existingClient.email,
+//           role: existingClient.role,
+//         },
+//         process.env.JWT_KEY,
+//         { expiresIn: '24h' },
+//       );
+//       return res.status(200).json({
+//         token,
+//         message: 'User already exists, logged in successfully',
+//         user: {
+//           id: existingClient._id,
+//           name: existingClient.name,
+//           email: existingClient.email,
+//           role: existingClient.role,
+//         },
+//       });
+//     }
 
-    const newClient = new Client({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      picture: picture || null,
-      auth0Id,
-      role: 'client',
-      password: null,
-    });
+//     const newClient = new Client({
+//       name: name.trim(),
+//       email: email.toLowerCase().trim(),
+//       picture: picture || null,
+//       auth0Id,
+//       role: 'client',
+//       password: null,
+//     });
 
-    const savedClient = await newClient.save();
-    console.log('Client saved:', savedClient._id);
+//     const savedClient = await newClient.save();
+//     console.log('Client saved:', savedClient._id);
 
-    const token = jwt.sign(
-      {
-        id: savedClient._id,
-        name: savedClient.name,
-        email: savedClient.email,
-        role: savedClient.role,
-      },
-      process.env.JWT_KEY,
-      { expiresIn: '24h' },
-    );
+//     const token = jwt.sign(
+//       {
+//         id: savedClient._id,
+//         name: savedClient.name,
+//         email: savedClient.email,
+//         role: savedClient.role,
+//       },
+//       process.env.JWT_KEY,
+//       { expiresIn: '24h' },
+//     );
 
-    console.log(' AUTH0 SIGNUP SUCCESS ');
-    res.status(201).json({
-      token,
-      message: 'Auth0 signup successful',
-      user: {
-        id: savedClient._id,
-        name: savedClient.name,
-        email: savedClient.email,
-        role: savedClient.role,
-      },
-    });
-  } catch (error) {
-    console.error('Auth0 signup error:', error);
-    res.status(500).json({
-      message: 'Unexpected server error during Auth0 signup',
-      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
-    });
-  }
-};
+//     console.log(' AUTH0 SIGNUP SUCCESS ');
+//     res.status(201).json({
+//       token,
+//       message: 'Auth0 signup successful',
+//       user: {
+//         id: savedClient._id,
+//         name: savedClient.name,
+//         email: savedClient.email,
+//         role: savedClient.role,
+//       },
+//     });
+//   } catch (error) {
+//     console.error('Auth0 signup error:', error);
+//     res.status(500).json({
+//       message: 'Unexpected server error during Auth0 signup',
+//       error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+//     });
+//   }
+// };
 
 // Get user
 export const getUserData = async (req, res) => {
@@ -530,15 +530,21 @@ export const getDashboardData = async (req, res) => {
 };
  export const createConsultation = async (req, res) => {
   try {
-    const { clientId, dateTime, notes } = req.body;
-    const clientName = clientId.name || 'Unknown Client'; 
+    const { clientId, lawyerId, dateTime, notes } = req.body;
+    console.log(clientId)
+    const  userExist = await Client.findById(clientId)
+    console.log(userExist)
+    const clientName = userExist.name || 'Unknown Client'; 
+    console.log(clientName)
+    console.log(req.body)
     const meetLink = await createZoomMeeting({ clientName, dateTime });
+    console.log("meetLink",meetLink)
     const consultation = await Consultation.create({
       clientId,
+      lawyerId,
       dateTime,
       notes,
-      meetLink,
-      status: 'Scheduled',
+      status: 'scheduled',
       accept: false,
     });
 
@@ -957,6 +963,16 @@ export const createZoomMeeting = async (consultationDetails) => {
           join_before_host: false,
           mute_upon_entry: true,
           waiting_room: true,
+        },
+      },
+      {
+        params: {
+          grant_type: 'account_credentials',
+          account_id: process.env.ZOOM_ACCOUNT_ID,
+        },
+        auth: {
+          username: process.env.ZOOM_CLIENT_ID,
+          password: process.env.ZOOM_CLIENT_SECRET,
         },
       },
       {

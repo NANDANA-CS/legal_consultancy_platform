@@ -129,12 +129,12 @@ const ClientLogin = () => {
     <>
       <div className="w-full max-w-5xl bg-gray-800/80 backdrop-blur-lg p-8 rounded-xl shadow-xl border border-gray-700/30">
         <h2 className="text-3xl font-bold mb-8 text-center text-white">Client Login</h2>
-        <LoginButton />
+        {/* <LoginButton />
         <div className="flex items-center my-4 mt-10">
           <hr className="flex-grow border-gray-600" />
           <p className="mx-4 text-sm text-gray-500">OR</p>
           <hr className="flex-grow border-gray-600" />
-        </div>
+        </div> */}
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">

@@ -20,10 +20,6 @@ const consultationSchema = new mongoose.Schema({
         enum: ['scheduled', 'completed', 'cancelled'],
         default: 'scheduled',
     },
-    meetLink: {
-        type: String,
-        required: true,
-    },
     accept:{
         type:Boolean,
         default:false,
